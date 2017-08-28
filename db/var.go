@@ -63,7 +63,7 @@ func (k Kind) Parse(s string) (interface{}, error) {
 	case Int:
 		return strconv.Atoi(s)
 	case Float:
-		return strconv.ParseFloat(s, 10)
+		return strconv.ParseFloat(s, 64)
 	case Bool:
 		return strconv.ParseBool(s)
 	case String:

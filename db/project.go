@@ -85,7 +85,7 @@ func (p *Project) AddEnv(e *Environment) error {
 		return ErrOutOfBounds
 	}
 	if e.ID == 0 {
-		return ErrInvalid
+		return ErrMissing
 	}
 	p.EnvList = append(p.EnvList, e.ID)
 
