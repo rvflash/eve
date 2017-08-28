@@ -11,27 +11,36 @@ import (
 // TestNewKind tests the Kind struct.
 func TestNewKind(t *testing.T) {
 	var dt = []struct {
-		i, id int
-		out   db.Kind
-		str   string
+		i, id             int
+		out               db.Kind
+		str, zstr, regexp string
+		zval              interface{}
 	}{
-		{i: 0, out: db.Unknown, id: 0, str: "Unknown"},
-		{i: 1, out: db.Int, id: 1, str: "Int"},
-		{i: 2, out: db.Float, id: 2, str: "Float"},
-		{i: 3, out: db.Bool, id: 3, str: "Bool"},
-		{i: 4, out: db.String, id: 4, str: "String"},
-		{i: 5, out: db.Unknown, id: 0, str: "Unknown"},
+		{i: 0, out: db.Unknown, id: 0, str: "Unknown", zstr: "", regexp: "", zval: nil},
+		{i: 1, out: db.Int, id: 1, str: "Int", zstr: "0", regexp: "[0-9]+", zval: 0},
+		{i: 2, out: db.Float, id: 2, str: "Float", zstr: "0", regexp: "[0-9.]+", zval: 0},
+		{i: 3, out: db.Bool, id: 3, str: "Bool", zstr: "false", regexp: `\b(true|false)\b`, zval: false},
+		{i: 4, out: db.String, id: 4, str: "String", zstr: "", regexp: "", zval: ""},
 	}
 	for i, tt := range dt {
 		k := db.NewKind(tt.i)
 		if !reflect.DeepEqual(k, tt.out) {
 			t.Errorf("%d. %q kind mismatch: exp=%q got=%q", i, tt.i, tt.out, k)
 		}
-		if tt.id != k.Int() {
-			t.Errorf("%d. %q kind ID mismatch: exp=%q got=%q", i, tt.i, tt.id, k.Int())
+		if v := k.Int(); tt.id != v {
+			t.Errorf("%d. %q kind ID mismatch: exp=%q got=%q", i, tt.i, tt.id, v)
 		}
-		if tt.str != k.String() {
-			t.Errorf("%d. %q kind name mismatch: exp=%q got=%q", i, tt.i, tt.str, k.String())
+		if v := k.String(); tt.str != v {
+			t.Errorf("%d. %q kind name mismatch: exp=%q got=%q", i, tt.i, tt.str, v)
+		}
+		if v := k.ZeroString(); tt.zstr != v {
+			t.Errorf("%d. %q kind name mismatch: exp=%q got=%q", i, tt.i, tt.zstr, v)
+		}
+		if v := k.ZeroValue(); tt.zval != v {
+			t.Errorf("%d. %q kind name mismatch: exp=%q got=%q", i, tt.i, tt.zval, v)
+		}
+		if v := k.Pattern(); tt.regexp != v {
+			t.Errorf("%d. %q kind name mismatch: exp=%q got=%q", i, tt.i, tt.regexp, v)
 		}
 	}
 }
@@ -59,29 +68,8 @@ func TestKind_Assert(t *testing.T) {
 	}
 }
 
-// TestNewVarID tests the method NewVarID.
-func TestNewVarID(t *testing.T) {
-	var dt = []struct {
-		in  string
-		out *db.VarID
-	}{
-		{"", db.NewVarID("")},
-		{db.VarIDTie, db.NewVarID("")},
-		{db.VarIDPrefix, db.NewVarID("")},
-		{db.VarIDPrefix + db.VarIDTie, db.NewVarID("")},
-		{db.VarIDPrefix + "" + db.VarIDTie + "", db.NewVarID("")},
-		{db.VarIDPrefix + "r" + db.VarIDTie + "v", &db.VarID{"r", "v"}},
-		{db.VarIDPrefix + "r" + db.VarIDTie + "v" + db.VarIDTie, &db.VarID{"r", "v" + db.VarIDTie}},
-	}
-	for i, tt := range dt {
-		if out := db.NewVarID(tt.in); !reflect.DeepEqual(out, tt.out) {
-			t.Errorf("%d. ID mismatch: exp=%q got=%q", i, tt.out, out)
-		}
-	}
-}
-
-// TestVar_ParseValue tests the method ParseValue on a Var.
-func TestVar_ParseValue(t *testing.T) {
+// TestKind_Parse tests the method ParseValue on a Var.
+func TestKind_Parse(t *testing.T) {
 	var dt = []struct {
 		on  *db.Var
 		in  string
@@ -117,11 +105,32 @@ func TestVar_ParseValue(t *testing.T) {
 	}
 	for i, tt := range dt {
 		out, err := tt.on.Kind.Parse(tt.in)
-		if !reflect.DeepEqual(err, tt.err) {
+		if !reflect.DeepEqual(tt.err, err) {
 			t.Errorf("%d. error mismatch: exp=%q got=%q", i, tt.err, err)
 		}
-		if !reflect.DeepEqual(out, tt.out) {
-			t.Errorf("%d. content mismatch: exp=%q got=%q", i, tt.out, out)
+		if !reflect.DeepEqual(tt.out, out) {
+			t.Errorf("%d. content mismatch: exp=%v got=%v", i, tt.out, out)
+		}
+	}
+}
+
+// TestNewVarID tests the method NewVarID.
+func TestNewVarID(t *testing.T) {
+	var dt = []struct {
+		in  string
+		out *db.VarID
+	}{
+		{"", db.NewVarID("")},
+		{db.VarIDTie, db.NewVarID("")},
+		{db.VarIDPrefix, db.NewVarID("")},
+		{db.VarIDPrefix + db.VarIDTie, db.NewVarID("")},
+		{db.VarIDPrefix + "" + db.VarIDTie + "", db.NewVarID("")},
+		{db.VarIDPrefix + "r" + db.VarIDTie + "v", &db.VarID{"r", "v"}},
+		{db.VarIDPrefix + "r" + db.VarIDTie + "v" + db.VarIDTie, &db.VarID{"r", "v" + db.VarIDTie}},
+	}
+	for i, tt := range dt {
+		if out := db.NewVarID(tt.in); !reflect.DeepEqual(out, tt.out) {
+			t.Errorf("%d. ID mismatch: exp=%q got=%q", i, tt.out, out)
 		}
 	}
 }
@@ -131,6 +140,7 @@ func TestVar_SetValues(t *testing.T) {
 	var dt = []struct {
 		on  *db.Var
 		in  map[string]string
+		out db.EnvsValue
 		err error
 	}{
 		// errors
@@ -146,20 +156,24 @@ func TestVar_SetValues(t *testing.T) {
 		},
 		// valid
 		{
-			on: db.NewVar("b", db.Bool.Int()),
-			in: map[string]string{"name": "true"},
+			on:  db.NewVar("b", db.Bool.Int()),
+			in:  map[string]string{"name": "true"},
+			out: db.EnvsValue{"name": true},
 		},
 		{
-			on: db.NewVar("i", db.Int.Int()),
-			in: map[string]string{"name": "10", "name1": "11", "name2": "12"},
+			on:  db.NewVar("i", db.Int.Int()),
+			in:  map[string]string{"name": "10", "name1": "11", "name2": "12"},
+			out: db.EnvsValue{"name": 10, "name1": 11, "name2": 12},
 		},
 		{
-			on: db.NewVar("f", db.Float.Int()),
-			in: map[string]string{"name": "3.14"},
+			on:  db.NewVar("f", db.Float.Int()),
+			in:  map[string]string{"name": "3.14"},
+			out: db.EnvsValue{"name": 3.14},
 		},
 		{
-			on: db.NewVar("s", db.String.Int()),
-			in: map[string]string{"name": "true"},
+			on:  db.NewVar("s", db.String.Int()),
+			in:  map[string]string{"name": "true"},
+			out: db.EnvsValue{"name": "true"},
 		},
 	}
 	for i, tt := range dt {
@@ -171,6 +185,8 @@ func TestVar_SetValues(t *testing.T) {
 			}
 		} else if tt.err != nil {
 			t.Errorf("%d. expected error: exp=%q got=%q", i, tt.err, err)
+		} else if !reflect.DeepEqual(tt.out, tt.on.Values) {
+			t.Errorf("%d. content mismatch: exp=%q got=%q", i, tt.out, tt.on.Values)
 		}
 	}
 }
@@ -205,9 +221,24 @@ func TestVar_CleanValues(t *testing.T) {
 			partial: true,
 		},
 		{
-			on:   &db.Var{Name: "b", Kind: db.Bool, Values: db.EnvsValue{"_.": false}},
+			on:   &db.Var{Name: "i", Kind: db.Int, Values: db.EnvsValue{"_.": 666}},
 			with: [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
-			out:  db.EnvsValue{"_.": false},
+			out:  db.EnvsValue{"_.": 666},
+		},
+		{
+			on:   &db.Var{Name: "f", Kind: db.Float, Values: db.EnvsValue{"_.": 3.14}},
+			with: [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
+			out:  db.EnvsValue{"_.": 3.14},
+		},
+		{
+			on:   &db.Var{Name: "b", Kind: db.Bool, Values: db.EnvsValue{"_.": true}},
+			with: [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
+			out:  db.EnvsValue{"_.": true},
+		},
+		{
+			on:   &db.Var{Name: "s", Kind: db.String, Values: db.EnvsValue{"_.": ""}},
+			with: [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
+			out:  db.EnvsValue{"_.": ""},
 		},
 	}
 	for i, tt := range dt {

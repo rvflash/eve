@@ -120,46 +120,6 @@ func TestOpen(t *testing.T) {
 	}
 }
 
-// @todo
-func TestProject(t *testing.T) {
-	// Opens the database.
-	dbt, err := openDb()
-	if err != nil {
-		t.Fatalf("open %s: %s", dbTest, err)
-	}
-	defer func() { _ = dbt.stop() }()
-
-	if err := dbt.createProjectWithEnvVar("test"); err != nil {
-		t.Fatalf("unable to create the test's database: %s", err)
-	}
-	dp, err := dbt.r.GetProject("test")
-	if err != nil {
-		t.Fatalf("unable to retrieve the test's project: %s", err)
-	}
-	p, ok := dp.(*db.Project)
-	if !ok {
-		t.Fatal("invalid test's project")
-	}
-	if p.Name != "test" {
-		t.Errorf("project name mismatch: exp=%q got=%q", "test", p.Name)
-	}
-	if ns := len(p.Envs()); ns != 2 {
-		t.Errorf("envs size mismatch: exp=%d got=%d", 2, ns)
-	}
-	if vs := len(p.Vars()); vs != 1 {
-		t.Errorf("vars size mismatch: exp=%d got=%d", 1, vs)
-	}
-	if p.Deployed() {
-		t.Errorf("expected not deployed project")
-	}
-	if p.AutoIncrementing() {
-		t.Errorf("expected auto incremented bucket")
-	}
-	if err := p.SetKey([]byte("newk")); err != nil || p.ID != "newk" {
-		t.Errorf("expected newk as identifier")
-	}
-}
-
 // TestData_Projects tests the method to list the projects.
 func TestData_Projects(t *testing.T) {
 	// Opens the database.
@@ -465,6 +425,16 @@ func TestData_Var(t *testing.T) {
 	}
 }
 
+func TestData_VarLifeCycle(t *testing.T) {
+	// Opens the database.
+	dbt, err := openDb()
+	if err != nil {
+		t.Fatalf("open %s: %s", dbTest, err)
+	}
+	defer func() { _ = dbt.stop() }()
+
+}
+
 // TestData_Env tests the creation, modification of an environment.
 func TestData_Env(t *testing.T) {
 	// Opens the database.
@@ -519,7 +489,7 @@ func TestData_Env(t *testing.T) {
 			do:   "bind",
 			in:   &db.Environment{Name: "Environment", Values: []string{"dev", "qa"}},
 			into: "test",
-			err:  errors.WithMessage(db.ErrInvalid, "project: env"),
+			err:  errors.WithMessage(db.ErrMissing, "project: env"),
 		},
 		{
 			do:   "unbind",
