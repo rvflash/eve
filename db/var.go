@@ -38,18 +38,24 @@ func NewKind(kind int) Kind {
 }
 
 // Assert returns true if the value holds its kind.
-func (k Kind) Assert(value interface{}) (ok bool) {
+func (k Kind) Assert(value interface{}) (v interface{}, ok bool) {
 	switch k {
 	case Int:
-		_, ok = value.(int)
+		if v, ok = value.(int); !ok {
+			// JSON unmarshal stores the numbers as float64.
+			// We need to cast it as integer.
+			var f float64
+			f, ok = value.(float64)
+			v = int(f)
+		}
 	case Float:
-		_, ok = value.(float64)
+		v, ok = value.(float64)
 	case Bool:
-		_, ok = value.(bool)
+		v, ok = value.(bool)
 	case String:
-		_, ok = value.(string)
+		v, ok = value.(string)
 	}
-	return ok
+	return
 }
 
 // Int gives the value of the kind.
@@ -230,22 +236,22 @@ func (v *Var) CleanValues(env1, env2 *Environment) error {
 	// Creates a temporary map to keep only the ok values.
 	val := v.NewValues(env1, env2)
 	// Checks each value for all envs.
+	var ok bool
 	for k, d := range v.Values {
 		vid := NewVarID(k)
-		if _, ok := ev1[vid.EnvValue1]; !ok {
+		if _, ok = ev1[vid.EnvValue1]; !ok {
 			// Unknown value in the main environment.
 			v.Partial = true
 			continue
 		}
-		if _, ok := ev2[vid.EnvValue2]; !ok {
+		if _, ok = ev2[vid.EnvValue2]; !ok {
 			// Unknown value in the second environment.
 			v.Partial = true
 			continue
 		}
-		if !v.Kind.Assert(d) {
+		if val[vid.String()], ok = v.Kind.Assert(d); !ok {
 			return errors.WithMessage(ErrInvalid, k)
 		}
-		val[vid.String()] = d
 	}
 	v.Values = val
 

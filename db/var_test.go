@@ -48,22 +48,24 @@ func TestNewKind(t *testing.T) {
 // TestKind_Assert tests the method Assert on a Kind.
 func TestKind_Assert(t *testing.T) {
 	var dt = []struct {
-		on  db.Kind
-		in  interface{}
-		out bool
+		on      db.Kind
+		in, out interface{}
+		ok      bool
 	}{
 		// ko
-		{db.Unknown, nil, false},
-		{db.Bool, "", false},
+		{db.Unknown, nil, nil, false},
+		{db.Bool, "", "", false},
 		// ok
-		{db.String, "rv", true},
-		{db.Int, 1, true},
-		{db.Float, 3.14, true},
-		{db.Bool, true, true},
+		{db.String, "rv", "rv", true},
+		{db.Int, 1, 1, true},
+		{db.Float, 3.14, 3.14, true},
+		{db.Bool, true, true, true},
 	}
 	for i, tt := range dt {
-		if out := tt.on.Assert(tt.in); out != tt.out {
-			t.Errorf("%d. kind mismatch: exp=%q got=%q", i, tt.out, out)
+		if out, ok := tt.on.Assert(tt.in); ok != tt.ok {
+			t.Errorf("%d. kind mismatch: exp=%q got=%q", i, tt.ok, ok)
+		} else if out != tt.out {
+
 		}
 	}
 }

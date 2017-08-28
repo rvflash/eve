@@ -13,6 +13,7 @@ const dbTest = "test.db"
 
 type dbt struct {
 	r    *db.Data
+	vs   []uint64
 	v, s uint64
 }
 
@@ -42,6 +43,42 @@ func (d *dbt) createProjectWithVar() error {
 		return err
 	}
 	d.v = c.ID
+
+	return nil
+}
+
+func (d *dbt) createProjectWithVars() error {
+	if err := d.createProject(); err != nil {
+		return err
+	}
+
+	// Adds the boolean var.
+	v := db.NewVar("bool", db.Bool.Int())
+	if err := d.r.AddVarInProject(v, "test"); err != nil {
+		return err
+	}
+	d.vs = append(d.vs, v.ID)
+
+	// Adds the integer var.
+	v = db.NewVar("int", db.Int.Int())
+	if err := d.r.AddVarInProject(v, "test"); err != nil {
+		return err
+	}
+	d.vs = append(d.vs, v.ID)
+
+	// Adds the float var.
+	v = db.NewVar("float", db.Float.Int())
+	if err := d.r.AddVarInProject(v, "test"); err != nil {
+		return err
+	}
+	d.vs = append(d.vs, v.ID)
+
+	// Adds the string var.
+	v = db.NewVar("string", db.String.Int())
+	if err := d.r.AddVarInProject(v, "test"); err != nil {
+		return err
+	}
+	d.vs = append(d.vs, v.ID)
 
 	return nil
 }
@@ -433,6 +470,49 @@ func TestData_VarLifeCycle(t *testing.T) {
 	}
 	defer func() { _ = dbt.stop() }()
 
+	// Create one project as container with all type of variables.
+	if err := dbt.createProjectWithVars(); err != nil {
+		t.Fatalf("unable to create the scoped test's project: %v", err)
+	}
+
+	// New data by kind to update variables.
+	var dt = map[db.Kind]map[string]string{
+		db.Bool:   {"_.": "true"},
+		db.Int:    {"_.": "666"},
+		db.Float:  {"_.": "3.14"},
+		db.String: {"_.": "rv"},
+	}
+
+	for _, i := range dbt.vs {
+		// Tries to get each var.
+		d, err := dbt.r.GetVarInProject(i, "test")
+		if err != nil {
+			t.Fatalf("unable to get var %d: got=%q", i, err)
+		}
+		v := d.(*db.Var)
+
+		// Tries to update it.
+		if err = v.SetValues(dt[v.Kind]); err != nil {
+			t.Fatalf("unable to change var's values of %s: got=%q", v.Name, err)
+		}
+		if err = dbt.r.UpdateVarInProject(v, "test"); err != nil {
+			t.Fatalf("unable to update var %s: got=%q", v.Name, err)
+		}
+
+		// Checks if the updates has failed.
+		if d, err = dbt.r.GetVarInProject(v.ID, "test"); err != nil {
+			t.Fatalf("unable to get var %d: got=%q", v.ID, err)
+		}
+		nv := d.(*db.Var)
+		if !reflect.DeepEqual(v.Values, nv.Values) {
+			t.Fatalf("content mismatch for var %v: exp:%#v got=%#v", v.Name, v.Values, nv.Values)
+		}
+
+		// Tries to delete it.
+		if err = dbt.r.DeleteVarInProject(nv, "test"); err != nil {
+			t.Fatalf("unable to delete var %s: got=%q", nv.Name, err)
+		}
+	}
 }
 
 // TestData_Env tests the creation, modification of an environment.

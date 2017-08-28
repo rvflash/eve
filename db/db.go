@@ -189,7 +189,7 @@ func (m *Data) UpsertEnv(s *Environment) error {
 
 // GetVarInProject returns an error or the var if it exists.
 func (m *Data) GetVarInProject(key uint64, project string) (Keyer, error) {
-	p, err := m.project(project)
+	dp, err := m.GetProject(project)
 	if err != nil {
 		return nil, errors.WithMessage(err, "project")
 	}
@@ -198,6 +198,7 @@ func (m *Data) GetVarInProject(key uint64, project string) (Keyer, error) {
 		return d, errors.WithMessage(err, "var")
 	}
 	// Ensure to manipulate ok values for current environments.
+	p := dp.(*Project)
 	if err = d.CleanValues(p.MainEnv(), p.SecondEnv()); err != nil {
 		return nil, errors.WithMessage(err, "var")
 	}
@@ -206,11 +207,12 @@ func (m *Data) GetVarInProject(key uint64, project string) (Keyer, error) {
 
 // AddVarToProject adds a var on a project with its name.
 func (m *Data) AddVarInProject(d *Var, project string) error {
-	p, err := m.project(project)
+	dp, err := m.GetProject(project)
 	if err != nil {
 		return errors.WithMessage(err, "project")
 	}
 	// Checks if the var name is already used for this project.
+	p := dp.(*Project)
 	ck := p.Hash(d.Name)
 	if ok, err := m.exists(ck, idxVars); ok {
 		return errors.WithMessage(ErrAlreadyExists, "var")
@@ -271,11 +273,12 @@ func (m *Data) DeleteVarInProject(d *Var, project string) error {
 
 // UpdateVarInProject updates a project's var or returns in error if not exists.
 func (m *Data) UpdateVarInProject(d *Var, project string) error {
-	p, err := m.project(project)
+	dp, err := m.GetProject(project)
 	if err != nil {
 		return errors.WithMessage(err, "project")
 	}
 	// Checks if the env name exists for this project.
+	p := dp.(*Project)
 	ck := p.Hash(d.Name)
 	if ok, err := m.exists(ck, idxVars); !ok {
 		return errors.WithMessage(err, "var")
@@ -285,7 +288,7 @@ func (m *Data) UpdateVarInProject(d *Var, project string) error {
 		return errors.WithMessage(err, "var")
 	}
 	return m.db.Update(func(tx *bolt.Tx) error {
-		return m.put(tx, p, projects, false)
+		return m.put(tx, d, vars, false)
 	})
 }
 
