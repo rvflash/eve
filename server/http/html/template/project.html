@@ -1,0 +1,98 @@
+{{template "head.html"}}
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        {{template "header.html" .}}
+        {{template "top.html" .}}
+    </nav>
+</header>
+<div class="container-fluid my-3">
+    {{if not .Project.Vars}}
+    <h1>{{.Project.Name}}</h1>
+    <hr class="my-4">
+    <p class="lead mb-4">{{.Project.Description}}</p>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Add a environment</h4>
+                    <p class="card-text">Use a environment to vary the variable value accordingly (locale, etc.).</p>
+                    {{if .Envs}}
+                    <a href="#" data-toggle="modal" data-target="#addScope" class="btn btn-primary">Add an existing environment</a>
+                    {{end}}
+                    <a href="#" data-toggle="modal" data-target="#newScope" class="btn btn-primary">Create</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Add a variable</h4>
+                    <p class="card-text">Create the first variable to finalize the launching of the project.</p>
+                    <a href="#" data-toggle="modal" data-target="#newConstant" class="btn btn-primary">Create</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{else}}
+    <div class="row flex-xl-nowrap">
+        <div class="col-12 col-md-3 col-xl-2" id="searchVar">
+            <form action="/" class="my-1">
+                <div class="form-group">
+                    <input type="search" name="q" class="form-control" placeholder="Search..." aria-label="Search for..." autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-expanded="false" aria-labelledby="search-variable">
+                </div>
+            </form>
+            <hr class="my-4">
+            <div class="list-group small">
+            {{range .Project.Vars}}
+                {{if not .Deleted}}
+                <a href="/projects/{{$.Project.ID}}/var/{{.ID}}" class="list-group-item px-3 py-2">{{.Name}}</a>
+                {{end}}
+            {{end}}
+            </div>
+        </div>
+        <main class="col-12 col-md-9 col-xl-10">
+            <h1>{{.Project.Name}}</h1>
+            <hr class="my-4">
+            <p class="lead mb-4">{{.Project.Description}}</p>
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="card mb-3">
+                        <div class="card-header">Last update</div>
+                        <div class="card-body">
+                            <p class="card-text text-center">{{.Project.LastUpdateTs.Format "Jan 02, 2006 15:04:05 UTC"}}</p>
+                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteProject">Delete the project</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-header">Constants</div>
+                        <div class="card-body">
+                            <h4 class="card-title text-center">{{len .Project.Vars}}</h4>
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newConstant">Add another</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-header bg-warning">Last deploy</div>
+                        <div class="card-body">
+                            <p class="card-text text-center">
+                            {{if .Project.Deployed}}
+                                {{.Project.LastDeployTs.Format "Jan 02, 2006 15:04:05 UTC"}}
+                            {{else}}
+                                Not yet
+                            {{end}}
+                            </p>
+                            <a href="/projects/{{.Project.ID}}/deploy" class="btn btn-warning">Deploy</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    {{end}}
+</div>
+{{template "footer.html"}}
+{{template "bottom.html"}}
+{{template "foot.html"}}

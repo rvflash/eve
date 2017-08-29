@@ -1,0 +1,116 @@
+<script type="text/javascript">
+    $(function() {
+        // Manages environment.
+        var sv = $("#scopeValue");
+        var asv = $("#scopeValues");
+        var tsv =  $("#scopeValueTags");
+        // Adds a tag.
+        $("#addScopeValue").click(function() {
+            // Removes previous action.
+            sv.removeClass("is-invalid");
+            // Comma is used as separator, so we banned it.
+            var v = $.trim(sv.val()).replace(/,/g, '');
+            if (v == "") {
+                // Missing value.
+                sv.addClass("is-invalid");
+                return
+            }
+            sv.val("");
+            // Add it as environment values.
+            var e = false;
+            var a = asv.val().split(",");
+            if (a.length > 0) {
+                $.each(a,function(i){
+                    if (a[i] == v) {
+                        e = true
+                        return false
+                    }
+                });
+            }
+            if (e == false) {
+                asv.val(asv.val() + "," + v);
+                var n = tsv.find("[hidden]").clone().appendTo(tsv).removeAttr("hidden")
+                // Add behavior to remove it.
+                n.find("button.close").click(function() {
+                    var v = $(this).siblings().text();
+                    if (v == "") {
+                        return
+                    }
+                    // Removes it as environment values.
+                    var a = asv.val().split(",");
+                    if (a.length > 0) {
+                        $.each(a,function(i){
+                            if (a[i] == v) {
+                                delete a[i];
+                                return false
+                            }
+                        });
+                        asv.val(a.join(","));
+                    }
+                    $(this).parent().parent().remove();
+                });
+                n.find(".tag").text(v);
+            } else {
+                // Tag already exists.
+                sv.addClass("is-invalid");
+            }
+        });
+        // Creates a environment or a variable.
+        $("#nfs, #nfsa, #nfc").submit(function(e) {
+            e.preventDefault();
+            var c = $(this)
+            $.ajax({
+                method: "POST",
+                url: e.target.action,
+                data: $(this).serialize()
+            }).always(function () {
+                // Removes previous error message.
+                c.find(".alert-danger").remove();
+            }).done(function(data) {
+                // Redirects to the project page.
+                document.location = data.response;
+            }).fail(function(res) {
+                // Displays the error message.
+                var m = "unexpected error, please retry later";
+                if (typeof res.responseJSON !== "undefined"){
+                    m = res.responseJSON.response;
+                }
+                c.find(".modal-body").prepend("<div class=\"alert alert-danger\" role=\"alert\">"+m+"</div>");
+            });
+        });
+        // Delete one element.
+        $("#deleteVar, #deleteProject").find("a").click(function(e) {
+            e.preventDefault();
+            var c = $(this)
+            var b = c.parent().siblings(".modal-body");
+            $.ajax({
+                url: c.attr("href"),
+            }).always(function () {
+                // Removes previous error message.
+                b.find(".alert-danger").remove();
+            }).done(function(data) {
+                // Redirects to the required page.
+                document.location = data.response;
+            }).fail(function(res) {
+                // Displays the error message.
+                var m = "unexpected error, please retry later";
+                if (typeof res.responseJSON !== "undefined"){
+                    m = res.responseJSON.response;
+                }
+                b.prepend("<div class=\"alert alert-danger\" role=\"alert\">"+m+"</div>");
+            });
+        });
+        // Searches inside the list of project's constant.
+        var s = $("#searchVar");
+        s.find("input").keyup(function() {
+            s.find("a[hidden]").removeAttr("hidden");
+            var vs = $.trim($(this).val());
+            if (vs == "") {
+                return
+            }
+            s.find("a").filter(function(){
+                return $(this).text().indexOf(vs) === -1;
+            }).attr("hidden", "hidden");
+        });
+    });
+</script>

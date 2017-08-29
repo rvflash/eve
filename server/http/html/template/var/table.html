@@ -1,0 +1,66 @@
+<script type="text/javascript">
+    $(function() {
+        // Manages environment.
+        var fv = $("#ufv");
+        var el = $("input.edit-line");
+        var highlight = function (t){
+            var hlc = "text-primary border-primary";
+            console.log(t.val(), t.data("text"));
+            if (t.val() != t.attr("data-text")) {
+                if (t.hasClass(hlc)) {
+                    return
+                }
+                t.addClass(hlc)
+            } else {
+                t.removeClass(hlc)
+            }
+        };
+        // Saves and sends update on the variable.
+        fv.submit(function(e) {
+            e.preventDefault();
+            var c = $(this)
+            $.ajax({
+                method: "POST",
+                url: e.target.action,
+                data: $(this).serialize()
+            }).always(function () {
+                // Removes previous error message.
+                c.find(".alert-danger").remove();
+            }).done(function(data) {
+                // Redirects to the project page.
+                document.location = data.response;
+            }).fail(function(res) {
+                // Displays the error message.
+                var m = "unexpected error, please retry later";
+                if (typeof res.responseJSON !== "undefined"){
+                    m = res.responseJSON.response;
+                }
+                c.find(".table").before("<div class=\"alert alert-danger\" role=\"alert\">"+m+"</div>");
+            });
+        });
+        // One to order all of them.
+        fv.find("input.edit[type=text]").on('keyup change', function (){
+            var t = $(this);
+            if (t.hasClass("edit-all")) {
+                el.val(t.val()).change();
+            } else {
+                t.closest("tr").find("input:not(.edit)").val(t.val()).change();
+            }
+        });
+        // Reset button must also reset ui styles after doing its job..
+        fv.find("button[type=reset]").on("click", function(e){
+            e.preventDefault();
+            fv.get(0).reset();
+            $("input[type=text]").each(function() {
+                highlight($(this));
+            });
+        });
+        // Highlight the changed input values.
+        fv.find("input[type=text]").on('keyup change', function (){
+            if ($(this).hasClass("edit")) {
+                return
+            }
+            highlight($(this));
+        });
+    });
+</script>

@@ -1,0 +1,33 @@
+<div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
+    <div class="btn-group btn-group-sm" role="nav" aria-label="Action">
+        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#newProject">New project</button>
+    </div>
+    <div class="modal fade" id="newProject" tabindex="-1" role="dialog" aria-labelledby="newProjectModalLabel" aria-hidden="true" data-keyboard="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="/projects" method="post" id="nfp">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="newProjectModalLabel">New project</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="project-name" class="form-control-label">Name:</label>
+                            <input type="text" class="form-control" id="project-name" name="name" pattern="[a-zA-Z0-9-_ ]+" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="project-desc" class="form-control-label">Description:</label>
+                            <textarea class="form-control" id="project-desc" name="desc"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

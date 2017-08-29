@@ -1,0 +1,47 @@
+{{template "head.html"}}
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        {{template "header.html"}}
+        {{template "top.html"}}
+    </nav>
+</header>
+<div class="container-fluid my-3">
+    {{if .Err}}
+    <div class="alert alert-danger" role="alert">
+        {{.Err}}
+    </div>
+    {{end}}
+    {{if not .Projects}}
+    <div class="jumbotron">
+        <h1 class="display-3">Hello, world!</h1>
+        <p class="lead">Thanks to choose E.V.E. as Environment Variables Editor to administrate and deploy your environment's configuration.</p>
+        <hr class="my-4">
+        <p class="lead">
+            <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#newProject">Create your first project</a>
+        </p>
+    </div>
+    {{else}}
+    <div class="row">
+        {{range .Projects}}
+        <div class="col-sm-4 my-2">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">{{.Name}}</h4>
+                    <p class="card-text">{{.Description}}</p>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {{if .LastUpdateTs}}<li class="list-group-item">Last update: {{.LastUpdateTs.Format "Jan 02, 2006 15:04:05 UTC"}}</li>{{end}}
+                    {{if .Deployed}}<li class="list-group-item bg-primary text-white">Last deploy: {{.LastDeployTs.Format "Jan 02, 2006 15:04:05 UTC"}}</li>{{end}}
+                </ul>
+                <div class="card-body">
+                    <a href="/projects/{{.ID}}/" class="btn btn-primary">Manage</a>
+                </div>
+            </div>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+</div>
+{{template "footer.html"}}
+{{template "bottom.html"}}
+{{template "foot.html"}}

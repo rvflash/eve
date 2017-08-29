@@ -1,0 +1,25 @@
+<script type="text/javascript">
+    $(function() {
+        $("#nfp").submit(function(e) {
+            e.preventDefault();
+            var c = $(this)
+            $.ajax({
+                method: "POST",
+                url: e.target.action,
+                data: $(this).serialize()
+            }).done(function(data) {
+                // Removes previous error message.
+                c.find(".alert").remove();
+                // Redirects to the project page.
+                document.location = data.response;
+            }).fail(function(res) {
+                // Displays the error message.
+                var m = "unexpected error, please retry later";
+                if (typeof res.responseJSON !== "undefined"){
+                    m = res.responseJSON.response;
+                }
+                c.find(".modal-body").prepend("<div class=\"alert alert-danger\" role=\"alert\">"+m+"</div>");
+            });
+        });
+    });
+</script>
