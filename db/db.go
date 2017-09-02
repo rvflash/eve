@@ -1,3 +1,7 @@
+// Copyright (c) 2017 Hervé Gouchet. All rights reserved.
+// Use of this source code is governed by the MIT License
+// that can be found in the LICENSE file.
+
 package db
 
 import (
@@ -199,7 +203,7 @@ func (m *Data) GetVarInProject(key uint64, project string) (Keyer, error) {
 	}
 	// Ensure to manipulate ok values for current environments.
 	p := dp.(*Project)
-	if err = d.CleanValues(p.MainEnv(), p.SecondEnv()); err != nil {
+	if err = d.CleanValues(p.FirstEnv(), p.SecondEnv()); err != nil {
 		return nil, errors.WithMessage(err, "var")
 	}
 	return d, err
@@ -220,7 +224,7 @@ func (m *Data) AddVarInProject(d *Var, project string) error {
 		return errors.WithMessage(err, "var")
 	}
 	// Ensure to manipulate ok values for current environments.
-	if err = d.CleanValues(p.MainEnv(), p.SecondEnv()); err != nil {
+	if err = d.CleanValues(p.FirstEnv(), p.SecondEnv()); err != nil {
 		return errors.WithMessage(err, "var")
 	}
 	return m.db.Update(func(tx *bolt.Tx) error {
@@ -284,7 +288,7 @@ func (m *Data) UpdateVarInProject(d *Var, project string) error {
 		return errors.WithMessage(err, "var")
 	}
 	// Ensure to manipulate ok values for current environments.
-	if err = d.CleanValues(p.MainEnv(), p.SecondEnv()); err != nil {
+	if err = d.CleanValues(p.FirstEnv(), p.SecondEnv()); err != nil {
 		return errors.WithMessage(err, "var")
 	}
 	return m.db.Update(func(tx *bolt.Tx) error {

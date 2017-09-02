@@ -1,3 +1,7 @@
+// Copyright (c) 2017 Hervé Gouchet. All rights reserved.
+// Use of this source code is governed by the MIT License
+// that can be found in the LICENSE file.
+
 package db
 
 import (
@@ -103,8 +107,8 @@ func (p *Project) DeleteEnv(e *Environment) (err error) {
 	return nil
 }
 
-// MainEnv is an alias to access the first environment.
-func (p *Project) MainEnv() *Environment {
+// FirstEnv is an alias to access the first environment.
+func (p *Project) FirstEnv() *Environment {
 	return p.Envs()[0].(*Environment)
 }
 

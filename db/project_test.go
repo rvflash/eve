@@ -40,8 +40,8 @@ func TestNewProject(t *testing.T) {
 	if n := len(p.Envs()); n != 2 {
 		t.Errorf("new project has 2 env by default: got=%q", n)
 	}
-	if !reflect.DeepEqual(p.MainEnv(), db.DefaultEnv) {
-		t.Errorf("main env mismatch: exp=%q got=%q", p.MainEnv(), db.DefaultEnv)
+	if !reflect.DeepEqual(p.FirstEnv(), db.DefaultEnv) {
+		t.Errorf("main env mismatch: exp=%q got=%q", p.FirstEnv(), db.DefaultEnv)
 	}
 	if !reflect.DeepEqual(p.SecondEnv(), db.DefaultEnv) {
 		t.Errorf("second env mismatch: exp=%q got=%q", p.SecondEnv(), db.DefaultEnv)

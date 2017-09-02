@@ -1,3 +1,7 @@
+// Copyright (c) 2017 Hervé Gouchet. All rights reserved.
+// Use of this source code is governed by the MIT License
+// that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -5,20 +9,25 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/rvflash/elapsed"
 	"github.com/rvflash/eve/db"
 )
 
 var (
-	tmplPath = "./html/template"
+	tmplPath    = "./html/template"
+	tmplFuncMap = template.FuncMap{
+		"elapsed": elapsed.Time,
+	}
 )
 
 type tmplVars struct {
-	Title string
+	Title, Href string
 }
 
 // HomeHandler listens and server the homepage.
 func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles(
+	// Adds the function to display time elapsed instead of the datetime.
+	t, err := template.New("home.html").Funcs(tmplFuncMap).ParseFiles(
 		tmplPath+"/home.html",
 		tmplPath+"/home/top.html",
 		tmplPath+"/home/bottom.html",

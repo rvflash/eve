@@ -30,8 +30,8 @@
                     <p class="card-text">{{.Description}}</p>
                 </div>
                 <ul class="list-group list-group-flush">
-                    {{if .LastUpdateTs}}<li class="list-group-item">Last update: {{.LastUpdateTs.Format "Jan 02, 2006 15:04:05 UTC"}}</li>{{end}}
-                    {{if .Deployed}}<li class="list-group-item bg-primary text-white">Last deploy: {{.LastDeployTs.Format "Jan 02, 2006 15:04:05 UTC"}}</li>{{end}}
+                    {{if .LastUpdateTs}}<li class="list-group-item">Last update: <span title="{{.LastUpdateTs.Format "Jan 02, 2006 15:04:05 UTC"}}">{{elapsed .LastUpdateTs}}</span></li>{{end}}
+                    {{if .Deployed}}<li class="list-group-item bg-primary text-white">Last deploy: <span title="{{.LastDeployTs.Format "Jan 02, 2006 15:04:05 UTC"}}">{{elapsed .LastDeployTs}}</span></li>{{end}}
                 </ul>
                 <div class="card-body">
                     <a href="/projects/{{.ID}}/" class="btn btn-primary">Manage</a>

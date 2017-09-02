@@ -1,3 +1,7 @@
+// Copyright (c) 2017 Hervé Gouchet. All rights reserved.
+// Use of this source code is governed by the MIT License
+// that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -63,7 +67,7 @@ func (h *varHandler) deleteHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *varHandler) getHandler(w http.ResponseWriter, r *http.Request) {
 	// Builds the page.
-	t, err := template.ParseFiles(
+	t, err := template.New("var.html").Funcs(tmplFuncMap).ParseFiles(
 		tmplPath+"/var.html",
 		tmplPath+"/var/table.html",
 		tmplPath+"/project/top.html",
@@ -89,6 +93,7 @@ func (h *varHandler) getHandler(w http.ResponseWriter, r *http.Request) {
 		VarIDTie:    db.VarIDTie,
 	}
 	tv.Title = h.p.(*db.Project).Name
+	tv.Href = "/projects/" + h.rv["pid"] + "/"
 	tv.Var = h.v
 	tv.Project = h.p
 	tv.Kinds = db.Kinds
