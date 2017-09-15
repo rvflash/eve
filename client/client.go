@@ -6,6 +6,12 @@ package client
 
 import "errors"
 
+// Caller must be implemented by any client to call a service,
+// waits for it to complete, and returns its error status.
+type Caller interface {
+	Call(service string, args, reply interface{}) error
+}
+
 // Reader must be implemented by any client to get data.
 type Getter interface {
 	Get(key string) interface{}

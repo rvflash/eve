@@ -115,8 +115,5 @@ type cacheItem struct {
 
 // expired returns true if the item in cache has expired.
 func (i *cacheItem) expired() bool {
-	if !i.expires.IsZero() {
-		return time.Now().After(i.expires)
-	}
-	return false
+	return time.Now().After(i.expires)
 }

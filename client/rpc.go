@@ -14,17 +14,46 @@ import (
 
 // RPC is client with connection to cache'service.
 type RPC struct {
-	c *rpc.Client
+	c Caller
 }
 
-// OpenRPC returns an instance of RPC with a TCP connection to it.
+// NewRPC returns a new instance of RPC.
+func NewRPC(conn Caller) *RPC {
+	return &RPC{c: conn}
+}
+
+// OpenRPC returns an instance of RPC with a TCP connection into it.
 // DSN is in the form of "localhost:1010".
+// If the connection fails, it returns the error.
 func OpenRPC(dsn string, timeout time.Duration) (*RPC, error) {
 	c, err := net.DialTimeout("tcp", dsn, timeout)
 	if err != nil {
 		return nil, err
 	}
-	return &RPC{c: rpc.NewClient(c)}, nil
+	return NewRPC(rpc.NewClient(c)), nil
+}
+
+// Bulk applies the item modifications on the cache.
+// It acknowledges the boolean if it succeeds.
+// An error occurs if the call fails.
+func (r *RPC) Bulk(batch map[string]interface{}) error {
+	var i int
+	if i = len(batch); i == 0 {
+		return nil
+	}
+	items := make([]*cache.Item, i)
+	for k, v := range batch {
+		i--
+		items[i] = &cache.Item{Key: k, Value: v}
+	}
+	var bulked bool
+	if err := r.c.Call("Cache.Bulk", items, &bulked); err != nil {
+		return err
+	}
+	if !bulked {
+		return ErrFailure
+	}
+	return nil
 }
 
 // Clear resets the cache and acknowledges the boolean if it succeeds.
@@ -70,7 +99,7 @@ func (r *RPC) Lookup(key string) (interface{}, bool) {
 
 // Raw returns the value behind the key or an error if it not exists
 func (r *RPC) Raw(key string) (interface{}, error) {
-	var item *cache.CacheItem
+	var item cache.Item
 	if err := r.c.Call("Cache.Get", key, &item); err != nil {
 		return nil, err
 	}
@@ -80,8 +109,8 @@ func (r *RPC) Raw(key string) (interface{}, error) {
 // Set saves the item and acknowledges the boolean if it succeeds.
 // An error occurs if the call fails.
 func (r *RPC) Set(key string, value interface{}) error {
-	item := &cache.CacheItem{Key: key, Value: value}
 	var added bool
+	item := &cache.Item{Key: key, Value: value}
 	if err := r.c.Call("Cache.Put", item, &added); err != nil {
 		return err
 	}
@@ -93,8 +122,8 @@ func (r *RPC) Set(key string, value interface{}) error {
 
 // Stats returns statistics about the current server.
 // An error occurs and returned if the call fails.
-func (r *RPC) Stats() (*cache.Requests, error) {
-	req := &cache.Requests{}
+func (r *RPC) Stats() (*cache.Metrics, error) {
+	req := &cache.Metrics{}
 	err := r.c.Call("Cache.Stats", true, req)
 	return req, err
 }
