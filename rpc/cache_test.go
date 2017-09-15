@@ -17,7 +17,7 @@ func TestWorkflow(t *testing.T) {
 	// Creates a new instance of the cache.
 	c := rpc.New()
 	// Gets an unknown variable.
-	var i *rpc.CacheItem
+	var i *rpc.Item
 	if err := c.Get(k, i); err != rpc.ErrNotFound {
 		t.Fatalf("expected key not found: got=%q", err)
 	}
@@ -29,14 +29,14 @@ func TestWorkflow(t *testing.T) {
 		t.Fatalf("ack mismatch: exp=false got=%v", ok)
 	}
 	// Adds a variable.
-	i = &rpc.CacheItem{Key: k, Value: v}
+	i = &rpc.Item{Key: k, Value: v}
 	if err := c.Put(i, &ok); err != nil {
 		t.Fatalf("error mismatch: exp=nil got=%q", err)
 	} else if !ok {
 		t.Fatalf("ack mismatch: exp=true got=%v", ok)
 	}
 	// Retrieves its content.
-	i = &rpc.CacheItem{}
+	i = &rpc.Item{}
 	if err := c.Get(k, i); err != nil {
 		t.Fatalf("expected key found: got=%q", err)
 	} else if k != i.Key {
@@ -50,7 +50,7 @@ func TestWorkflow(t *testing.T) {
 		t.Fatalf("expected no error with deletion: got=%q", err)
 	}
 	// Adds a variable.
-	i = &rpc.CacheItem{Key: k, Value: v}
+	i = &rpc.Item{Key: k, Value: v}
 	if err := c.Put(i, &ok); err != nil {
 		t.Fatalf("error mismatch: exp=nil got=%q", err)
 	} else if !ok {
