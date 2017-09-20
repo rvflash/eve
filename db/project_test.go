@@ -68,26 +68,26 @@ func TestNewProject(t *testing.T) {
 // TestNewProject_Envs tests the management of the environments on a project.
 func TestNewProject_Envs(t *testing.T) {
 	var dt = []struct {
-		in, in1         *db.Environment
+		in, in1         *db.Env
 		err, err1, err2 error
 	}{
 		// error
 		{
-			in:   &db.Environment{},
-			in1:  &db.Environment{},
+			in:   &db.Env{},
+			in1:  &db.Env{},
 			err:  db.ErrMissing,
 			err1: db.ErrMissing,
 			err2: db.ErrMissing,
 		},
 		// valid
 		{
-			in:   &db.Environment{ID: 1},
-			in1:  &db.Environment{ID: 1},
+			in:   &db.Env{ID: 1},
+			in1:  &db.Env{ID: 1},
 			err2: db.ErrOutOfBounds,
 		},
 		{
-			in:   &db.Environment{ID: 1},
-			in1:  &db.Environment{ID: 2},
+			in:   &db.Env{ID: 1},
+			in1:  &db.Env{ID: 2},
 			err1: db.ErrNotFound,
 			err2: db.ErrOutOfBounds,
 		},

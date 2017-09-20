@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT License
 // that can be found in the LICENSE file.
 
-package	 db
+package db
 
 import (
 	"regexp"
@@ -14,16 +14,25 @@ func check(s string) bool {
 	return ok
 }
 
+func checklist(s []string) (ok bool) {
+	if len(s) == 0 {
+		return
+	}
+	for _, v := range s {
+		if ok, _ = regexp.MatchString("^[a-zA-Z0-9]+$", v); !ok {
+			return
+		}
+	}
+	return
+}
+
 // Returns a lower case version of the given string with only a-z, dash and underscore).
 func clean(s string) string {
 	// Replaces the spaces by dashes after removing all redundant spaces
 	s = strings.Join(strings.Fields(s), " ")
 	s = strings.Replace(strings.TrimSpace(s), " ", "-", -1)
 	// Removes all the chars not allowed.
-	reg, err := regexp.Compile("[^a-z0-9_-]+")
-	if err != nil {
-		return ""
-	}
+	reg, _ := regexp.Compile("[^a-z0-9_-]+")
 	return reg.ReplaceAllString(strings.ToLower(s), "")
 }
 

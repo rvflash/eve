@@ -8,12 +8,12 @@ import (
 // TestProject_Envs tests the methods Envs.
 func TestProject_Envs(t *testing.T) {
 	var dt = []struct {
-		im, is, om, os *Environment
+		im, is, om, os *Env
 	}{
 		{om: DefaultEnv, os: DefaultEnv},
-		{im: &Environment{ID: 1}, om: &Environment{ID: 1}, os: DefaultEnv},
-		{im: &Environment{ID: 1}, is: &Environment{ID: 2}, om: &Environment{ID: 2}, os: &Environment{ID: 1}},
-		{im: &Environment{ID: 11}, is: &Environment{ID: 2}, om: &Environment{ID: 11}, os: &Environment{ID: 2}},
+		{im: &Env{ID: 1}, om: &Env{ID: 1}, os: DefaultEnv},
+		{im: &Env{ID: 1}, is: &Env{ID: 2}, om: &Env{ID: 2}, os: &Env{ID: 1}},
+		{im: &Env{ID: 11}, is: &Env{ID: 2}, om: &Env{ID: 11}, os: &Env{ID: 2}},
 	}
 	for i, tt := range dt {
 		// Creates the project.

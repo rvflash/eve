@@ -10,10 +10,10 @@ import (
 )
 
 // DefaultEnv is the default Environment used to build the variables's values.
-var DefaultEnv = &Environment{Values: []string{""}}
+var DefaultEnv = &Env{Values: []string{""}}
 
 // Environment represents a env of execution.
-type Environment struct {
+type Env struct {
 	ID           uint64    `json:"id"`
 	Name         string    `json:"name"`
 	Values       []string  `json:"vals"`
@@ -21,17 +21,17 @@ type Environment struct {
 }
 
 // NewEnv returns a new instance of Environment.
-func NewEnv(name string, values []string) *Environment {
-	return &Environment{Name: name, Values: values}
+func NewEnv(name string, values []string) *Env {
+	return &Env{Name: name, Values: values}
 }
 
 // AutoIncrementing return true in order to have auo-increment primary key.
-func (s *Environment) AutoIncrementing() bool {
+func (s *Env) AutoIncrementing() bool {
 	return true
 }
 
 // Key returns the key of the env.
-func (s *Environment) Key() []byte {
+func (s *Env) Key() []byte {
 	if s.ID == 0 {
 		return nil
 	}
@@ -39,24 +39,24 @@ func (s *Environment) Key() []byte {
 }
 
 // SetKey returns if error if the change of the key failed.
-func (s *Environment) SetKey(k []byte) error {
+func (s *Env) SetKey(k []byte) error {
 	s.ID = btoi(k)
 	return nil
 }
 
-// Updated changes the last update date of the var.
-func (s *Environment) Updated() {
+// Updated changes the last update date of the environment.
+func (s *Env) Updated() {
 	s.LastUpdateTs = time.Now()
 }
 
 // Valid checks if all required data as well formed.
-func (s *Environment) Valid(insert bool) error {
+func (s *Env) Valid(insert bool) error {
 	s.Name = strings.TrimSpace(s.Name)
 	if !check(s.Name) {
 		return ErrInvalid
 	}
 	s.Values = unique(s.Values)
-	if len(s.Values) == 0 {
+	if !checklist(s.Values) {
 		return ErrMissing
 	}
 	if !insert && s.ID == 0 {

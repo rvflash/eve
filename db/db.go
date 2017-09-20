@@ -29,6 +29,7 @@ var (
 	projects = []byte("projects")
 	envs     = []byte("envs")
 	vars     = []byte("vars")
+	nodes    = []byte("nodes")
 
 	// unique indexes
 	idxEnvs = []byte("ix_envs")
@@ -64,6 +65,38 @@ func Open(db string) (*Data, error) {
 // Close closes the connection to database.
 func (m *Data) Close() error {
 	return m.db.Close()
+}
+
+// Nodes returns the list of server used as RPC cache.
+func (m *Data) Nodes() ([]Keyer, error) {
+	return m.all(nodes)
+}
+
+// AddNode adds a server as cache or returns on error if already exists.
+func (m *Data) AddNode(n *Node) error {
+	return m.db.Update(func(tx *bolt.Tx) error {
+		return m.put(tx, n, nodes, true)
+	})
+}
+
+// DeleteNode removes a server.
+func (m *Data) DeleteNode(n *Node) error {
+	return m.db.Update(func(tx *bolt.Tx) error {
+		return tx.Bucket(nodes).Delete(n.Key())
+	})
+}
+
+// GetNode returns an error or the node if it exists.
+func (m *Data) GetNode(key string) (Keyer, error) {
+	d, err := m.get([]byte(key), nodes)
+	if err != nil {
+		return nil, err
+	}
+	n, ok := d.(*Node)
+	if !ok {
+		return nil, ErrInvalid
+	}
+	return n, err
 }
 
 // Projects returns the list of projects.
@@ -128,14 +161,14 @@ func (m *Data) GetEnv(key uint64) (Keyer, error) {
 }
 
 // AddEnv creates a env or returns on error if already exists.
-func (m *Data) AddEnv(s *Environment) error {
+func (m *Data) AddEnv(s *Env) error {
 	return m.db.Update(func(tx *bolt.Tx) error {
 		return m.put(tx, s, envs, true)
 	})
 }
 
 // BindEnvInProject binds a env to a project
-func (m *Data) BindEnvInProject(s *Environment, project string) error {
+func (m *Data) BindEnvInProject(s *Env, project string) error {
 	p, err := m.project(project)
 	if err != nil {
 		return errors.WithMessage(err, "project")
@@ -161,7 +194,7 @@ func (m *Data) BindEnvInProject(s *Environment, project string) error {
 }
 
 // UnbindEnvInProject unbinds a env to a project.
-func (m *Data) UnbindEnvInProject(s *Environment, project string) error {
+func (m *Data) UnbindEnvInProject(s *Env, project string) error {
 	p, err := m.project(project)
 	if err != nil {
 		return errors.WithMessage(err, "project")
@@ -185,7 +218,7 @@ func (m *Data) UnbindEnvInProject(s *Environment, project string) error {
 }
 
 // UpsertEnv updates or creates a env if not exists.
-func (m *Data) UpsertEnv(s *Environment) error {
+func (m *Data) UpsertEnv(s *Env) error {
 	return m.db.Update(func(tx *bolt.Tx) error {
 		return m.put(tx, s, envs, false)
 	})
@@ -410,7 +443,7 @@ func newFor(table []byte) (Keyer, error) {
 		return &Project{}, nil
 	}
 	if bytes.Equal(table, envs) {
-		return &Environment{}, nil
+		return &Env{}, nil
 	}
 	if bytes.Equal(table, vars) {
 		return &Var{}, nil
@@ -482,12 +515,12 @@ func (m *Data) project(key string) (*Project, error) {
 }
 
 // env returns a reference to a env or an error.
-func (m *Data) env(key uint64) (*Environment, error) {
+func (m *Data) env(key uint64) (*Env, error) {
 	d, err := m.get(itob(key), envs)
 	if err != nil {
 		return nil, err
 	}
-	s, ok := d.(*Environment)
+	s, ok := d.(*Env)
 	if !ok {
 		return nil, ErrInvalid
 	}

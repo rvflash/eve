@@ -107,7 +107,7 @@ func (d *dbt) createProjectWithEnvVar(ev ...string) error {
 	if err != nil {
 		return err
 	}
-	return d.r.BindEnvInProject(s.(*db.Environment), "test")
+	return d.r.BindEnvInProject(s.(*db.Env), "test")
 }
 
 func (d *dbt) createEnv(v []string) error {
@@ -531,7 +531,7 @@ func TestData_Env(t *testing.T) {
 
 	var dt = []struct {
 		do, into string
-		in, out  *db.Environment
+		in, out  *db.Env
 		err      error
 	}{
 		// errors
@@ -562,68 +562,68 @@ func TestData_Env(t *testing.T) {
 		},
 		{
 			do:  "get",
-			in:  &db.Environment{ID: 666},
+			in:  &db.Env{ID: 666},
 			err: db.ErrNotFound,
 		},
 		{
 			do:   "bind",
-			in:   &db.Environment{Name: "Environment", Values: []string{"dev", "qa"}},
+			in:   &db.Env{Name: "Environment", Values: []string{"dev", "qa"}},
 			into: "test",
 			err:  errors.WithMessage(db.ErrMissing, "project: env"),
 		},
 		{
 			do:   "unbind",
-			in:   &db.Environment{ID: 666, Name: "Environment", Values: []string{"dev", "qa"}},
+			in:   &db.Env{ID: 666, Name: "Environment", Values: []string{"dev", "qa"}},
 			into: "test",
 			err:  errors.WithMessage(db.ErrNotFound, "env"),
 		},
 		{
 			do:  "unbind",
-			in:  &db.Environment{ID: dbt.s, Name: "test", Values: []string{"test"}},
+			in:  &db.Env{ID: dbt.s, Name: "test", Values: []string{"test"}},
 			err: errors.WithMessage(db.ErrNotFound, "project"),
 		},
 		// valid
 		{
 			do:  "add",
 			in:  db.NewEnv(" Env", []string{"dev", "qa", "prod", "prod"}),
-			out: &db.Environment{Name: "Env", Values: []string{"dev", "qa", "prod"}},
+			out: &db.Env{Name: "Env", Values: []string{"dev", "qa", "prod"}},
 		},
 		{
 			do:  "upd",
-			in:  &db.Environment{ID: 666, Name: "Environment", Values: []string{"dev"}},
-			out: &db.Environment{ID: 666, Name: "Environment", Values: []string{"dev"}},
+			in:  &db.Env{ID: 666, Name: "Environment", Values: []string{"dev"}},
+			out: &db.Env{ID: 666, Name: "Environment", Values: []string{"dev"}},
 		},
 		{
 			do:  "upd",
-			in:  &db.Environment{ID: 666, Name: " Environment", Values: []string{"dev", "qa", "qa"}},
-			out: &db.Environment{ID: 666, Name: "Environment", Values: []string{"dev", "qa"}},
+			in:  &db.Env{ID: 666, Name: " Environment", Values: []string{"dev", "qa", "qa"}},
+			out: &db.Env{ID: 666, Name: "Environment", Values: []string{"dev", "qa"}},
 		},
 		{
 			do:  "get",
-			in:  &db.Environment{ID: 666},
-			out: &db.Environment{ID: 666, Name: "Environment", Values: []string{"dev", "qa"}},
+			in:  &db.Env{ID: 666},
+			out: &db.Env{ID: 666, Name: "Environment", Values: []string{"dev", "qa"}},
 		},
 		{
 			do:   "bind",
-			in:   &db.Environment{ID: dbt.s, Name: "test", Values: []string{"test"}},
-			out:  &db.Environment{ID: dbt.s, Name: "test", Values: []string{"test"}},
+			in:   &db.Env{ID: dbt.s, Name: "test", Values: []string{"test"}},
+			out:  &db.Env{ID: dbt.s, Name: "test", Values: []string{"test"}},
 			into: "test",
 		},
 		{
 			do:   "unbind",
-			in:   &db.Environment{ID: dbt.s, Name: "test", Values: []string{"test"}},
-			out:  &db.Environment{ID: dbt.s, Name: "test", Values: []string{"test"}},
+			in:   &db.Env{ID: dbt.s, Name: "test", Values: []string{"test"}},
+			out:  &db.Env{ID: dbt.s, Name: "test", Values: []string{"test"}},
 			into: "test",
 		},
 		{
 			do:  "get",
-			in:  &db.Environment{ID: dbt.s, Name: "test", Values: []string{"test"}},
-			out: &db.Environment{ID: dbt.s, Name: "test", Values: []string{"test"}},
+			in:  &db.Env{ID: dbt.s, Name: "test", Values: []string{"test"}},
+			out: &db.Env{ID: dbt.s, Name: "test", Values: []string{"test"}},
 		},
 		// Errors
 		{
 			do:  "add",
-			in:  &db.Environment{ID: 666, Name: "Environment", Values: []string{"qa"}},
+			in:  &db.Env{ID: 666, Name: "Environment", Values: []string{"qa"}},
 			err: db.ErrAlreadyExists,
 		},
 	}
@@ -637,7 +637,7 @@ func TestData_Env(t *testing.T) {
 			d, err = dbt.r.GetEnv(tt.in.ID)
 			if err == nil {
 				var ok bool
-				if tt.in, ok = d.(*db.Environment); !ok {
+				if tt.in, ok = d.(*db.Env); !ok {
 					t.Fatalf("invalid env: %v", tt.in)
 				}
 			}

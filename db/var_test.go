@@ -197,7 +197,7 @@ func TestVar_SetValues(t *testing.T) {
 func TestVar_CleanValues(t *testing.T) {
 	var dt = []struct {
 		on      *db.Var
-		with    [2]*db.Environment
+		with    [2]*db.Env
 		out     db.EnvsValue
 		partial bool
 		err     error
@@ -205,41 +205,41 @@ func TestVar_CleanValues(t *testing.T) {
 		// errors
 		{
 			on:   &db.Var{Name: "b", Kind: db.Bool, Values: db.EnvsValue{"_.": ""}},
-			with: [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
+			with: [2]*db.Env{db.DefaultEnv, db.DefaultEnv},
 			out:  db.EnvsValue{},
 			err:  errors.WithMessage(db.ErrInvalid, "_."),
 		},
 		// valid
 		{
 			on:      &db.Var{Name: "b", Kind: db.Bool, Values: db.EnvsValue{"_r.": false}},
-			with:    [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
+			with:    [2]*db.Env{db.DefaultEnv, db.DefaultEnv},
 			out:     db.EnvsValue{"_.": false},
 			partial: true,
 		},
 		{
 			on:      &db.Var{Name: "b", Kind: db.Bool, Values: db.EnvsValue{"_.v": false}},
-			with:    [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
+			with:    [2]*db.Env{db.DefaultEnv, db.DefaultEnv},
 			out:     db.EnvsValue{"_.": false},
 			partial: true,
 		},
 		{
 			on:   &db.Var{Name: "i", Kind: db.Int, Values: db.EnvsValue{"_.": 666}},
-			with: [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
+			with: [2]*db.Env{db.DefaultEnv, db.DefaultEnv},
 			out:  db.EnvsValue{"_.": 666},
 		},
 		{
 			on:   &db.Var{Name: "f", Kind: db.Float, Values: db.EnvsValue{"_.": 3.14}},
-			with: [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
+			with: [2]*db.Env{db.DefaultEnv, db.DefaultEnv},
 			out:  db.EnvsValue{"_.": 3.14},
 		},
 		{
 			on:   &db.Var{Name: "b", Kind: db.Bool, Values: db.EnvsValue{"_.": true}},
-			with: [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
+			with: [2]*db.Env{db.DefaultEnv, db.DefaultEnv},
 			out:  db.EnvsValue{"_.": true},
 		},
 		{
 			on:   &db.Var{Name: "s", Kind: db.String, Values: db.EnvsValue{"_.": ""}},
-			with: [2]*db.Environment{db.DefaultEnv, db.DefaultEnv},
+			with: [2]*db.Env{db.DefaultEnv, db.DefaultEnv},
 			out:  db.EnvsValue{"_.": ""},
 		},
 	}

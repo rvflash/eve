@@ -204,7 +204,7 @@ type EnvsValue map[string]interface{}
 
 // NewValues returns a new map of values for the given environments.
 // Each value use the default value of the kind of the variable.
-func (v *Var) NewValues(env1, env2 *Environment) EnvsValue {
+func (v *Var) NewValues(env1, env2 *Env) EnvsValue {
 	m := make(EnvsValue, len(env1.Values)*len(env2.Values))
 	for _, mv := range env1.Values {
 		for _, sv := range env2.Values {
@@ -232,7 +232,7 @@ func (v *Var) SetValues(m map[string]string) (err error) {
 // It also checks that only the current environments values are used.
 // A partial result is returned if one the environment does not exist.
 // It return on error if the kind of value does not match.
-func (v *Var) CleanValues(env1, env2 *Environment) error {
+func (v *Var) CleanValues(env1, env2 *Env) error {
 	v.Partial = false
 	// Transforms the values of envs as map to perform search on it.
 	ev1 := toMap(env1.Values)
