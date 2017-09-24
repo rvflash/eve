@@ -16,9 +16,19 @@ type Node struct {
 	AddTs time.Time `json:"upd_ts"`
 }
 
+// NewNode creates a new instance of a server node.
+func NewNode(server string) *Node {
+	return &Node{Addr: server}
+}
+
 // AutoIncrementing return true in order to have auo-increment primary key.
 func (c *Node) AutoIncrementing() bool {
 	return false
+}
+
+// ID returns the key of the server node as string
+func (c *Node) ID() string {
+	return string(c.Key())
 }
 
 // Key returns the key of the cache.
