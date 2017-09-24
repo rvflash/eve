@@ -52,7 +52,7 @@ func Open(db string) (*Data, error) {
 	}
 	// Initializes the database by creating the default buckets.
 	err = r.Update(func(tx *bolt.Tx) error {
-		for _, b := range [][]byte{projects, envs, vars, idxEnvs, idxVars} {
+		for _, b := range [][]byte{projects, envs, vars, nodes, idxEnvs, idxVars} {
 			if _, err := tx.CreateBucketIfNotExists(b); err != nil {
 				return err
 			}
@@ -447,6 +447,9 @@ func newFor(table []byte) (Keyer, error) {
 	}
 	if bytes.Equal(table, vars) {
 		return &Var{}, nil
+	}
+	if bytes.Equal(table, nodes) {
+		return &Node{}, nil
 	}
 	return nil, errors.WithMessage(ErrUnknown, "new")
 }

@@ -29,6 +29,10 @@ func openDb() (*dbt, error) {
 	return &dbt{r: r}, nil
 }
 
+func (d *dbt) createNode() error {
+	return d.r.AddNode(db.NewNode(":1010"))
+}
+
 func (d *dbt) createProject() error {
 	p := db.NewProject("test", "")
 	return d.r.AddProject(p)
@@ -157,6 +161,27 @@ func TestOpen(t *testing.T) {
 	}
 }
 
+// TestData_Nodes tests the method to list the server nodes.
+func TestData_Nodes(t *testing.T) {
+	// Opens the database.
+	dbt, err := openDb()
+	if err != nil {
+		t.Fatalf("open %s: %s", dbTest, err)
+	}
+	defer func() { _ = dbt.stop() }()
+
+	if err := dbt.createNode(); err != nil {
+		t.Fatalf("unable to create the test's node: %s", err)
+	}
+	var l []db.Keyer
+	if l, err = dbt.r.Nodes(); err != nil {
+		t.Errorf("error on nodes's listing: %q", err)
+	}
+	if s := len(l); s != 1 {
+		t.Errorf("nodes size mismatch: exp=%q got=%q", 1, s)
+	}
+}
+
 // TestData_Projects tests the method to list the projects.
 func TestData_Projects(t *testing.T) {
 	// Opens the database.
@@ -171,7 +196,7 @@ func TestData_Projects(t *testing.T) {
 	}
 	var l []db.Keyer
 	if l, err = dbt.r.Projects(); err != nil {
-		t.Errorf("error on project's listing: %q", err)
+		t.Errorf("error on projects's listing: %q", err)
 	}
 	if s := len(l); s != 1 {
 		t.Errorf("projects size mismatch: exp=%q got=%q", 1, s)
