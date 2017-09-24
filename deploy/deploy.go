@@ -72,7 +72,11 @@ func (t *Task) percentOf(i uint64) uint64 {
 }
 
 // Source must be implemented by any source want to be deployed.
+// Key returns the identifier of the project.
+// EnvsValues returns the values of each environments behind the project.
+// ToDeploy gives the list of variable to deploy, with their deploy's name as key.
 type Source interface {
+	Key() []byte
 	EnvsValues() (firstEnvValues, secondEnvValues []string)
 	ToDeploy(firstEnvValues, secondEnvValues []string) map[string]interface{}
 }
@@ -84,6 +88,7 @@ type Release struct {
 	env1, env2    []string
 	src, dst, dep map[string]interface{}
 	task          *Task
+	err           error
 }
 
 // New returns a new Release.
@@ -177,10 +182,41 @@ func (d *Release) Diff() map[string]interface{} {
 	return d.merge()
 }
 
-// Push uploads via RPC to the cache servers all the required data in one bulk.
+// Log shows the push's logs.
+// For each key, it returns the value before and after the push.
+func (d *Release) Log() map[string][2]interface{} {
+	if d.err != nil {
+		// An error occurred on pushing.
+		return nil
+	}
+	log := make(map[string][2]interface{})
+	for k := range d.dep {
+		nv, ok := d.src[k]
+		if !ok {
+			// Data ignored when the push.
+			continue
+		}
+		// In the first position, we have the value before the push,
+		// then, in the second, the value after the push.
+		v, _ := d.dst[k]
+		log[k] = [2]interface{}{v, nv}
+	}
+	if len(log) == 0 {
+		return nil
+	}
+	return log
+}
+
+// Push uploads via RPC to the cache servers all the required data
+// in one bulk.
+// It takes as parameter all the variable's names to ignore.
+// This list do not have the project ID or envs names as components.
 // It returns on error if the process fails.
-func (d *Release) Push() error {
+func (d *Release) Push(ignores ...string) error {
 	if _ = d.merge(); len(d.src) == 0 {
+		return ErrMissing
+	}
+	if d.rebase(ignores); len(d.src) == 0 {
 		return ErrMissing
 	}
 	var g errgroup.Group
@@ -190,7 +226,8 @@ func (d *Release) Push() error {
 			return c.Bulk(d.src)
 		})
 	}
-	return g.Wait()
+	d.err = g.Wait()
+	return d.err
 }
 
 // Status gives various counters about the tasks to do to deploy it.
@@ -256,4 +293,28 @@ func (d *Release) merge() map[string]interface{} {
 		}
 	}
 	return d.dep
+}
+
+// Adds keys to ignore in the source in order to do not push them.
+func (d *Release) rebase(without []string) {
+	if len(without) == 0 {
+		return
+	}
+	// Converts variable names in deploy keys.
+	keys := func(names []string) (keys []string) {
+		for _, name := range names {
+			for _, ev1 := range d.env1 {
+				for _, ev2 := range d.env2 {
+					pid := string(d.ref.Key())
+					keys = append(keys, Key(pid, ev1, ev2, name))
+				}
+			}
+		}
+		return
+	}(without)
+
+	// Cleans the source map by removing the variables to ignore.
+	for _, key := range keys {
+		delete(d.src, key)
+	}
 }
