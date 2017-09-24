@@ -209,14 +209,14 @@ func (d *Release) Log() map[string][2]interface{} {
 
 // Push uploads via RPC to the cache servers all the required data
 // in one bulk.
-// It takes as parameter all the variable's names to ignore.
+// It can take as parameter the exclusive list of variable's names to push.
 // This list do not have the project ID or envs names as components.
 // It returns on error if the process fails.
-func (d *Release) Push(ignores ...string) error {
+func (d *Release) Push(only ...string) error {
 	if _ = d.merge(); len(d.src) == 0 {
 		return ErrMissing
 	}
-	if d.rebase(ignores); len(d.src) == 0 {
+	if d.rebase(only); len(d.src) == 0 {
 		return ErrMissing
 	}
 	var g errgroup.Group
@@ -295,26 +295,25 @@ func (d *Release) merge() map[string]interface{} {
 	return d.dep
 }
 
-// Adds keys to ignore in the source in order to do not push them.
-func (d *Release) rebase(without []string) {
-	if len(without) == 0 {
+// Limits the scope of the push to these variable's name.
+func (d *Release) rebase(with []string) {
+	if len(with) == 0 {
 		return
 	}
-	// Converts variable names in deploy keys.
-	keys := func(names []string) (keys []string) {
-		for _, name := range names {
-			for _, ev1 := range d.env1 {
-				for _, ev2 := range d.env2 {
-					pid := string(d.ref.Key())
-					keys = append(keys, Key(pid, ev1, ev2, name))
-				}
+	// Converts variable names in map of deploy keys.
+	only := make(map[string]struct{}, 0)
+	for _, name := range with {
+		for _, ev1 := range d.env1 {
+			for _, ev2 := range d.env2 {
+				pid := string(d.ref.Key())
+				only[Key(pid, ev1, ev2, name)] = struct{}{}
 			}
 		}
-		return
-	}(without)
-
-	// Cleans the source map by removing the variables to ignore.
-	for _, key := range keys {
-		delete(d.src, key)
+	}
+	// Cleans the source by removing all the data to ignore.
+	for k := range d.src {
+		if _, ok := only[k]; !ok {
+			delete(d.src, k)
+		}
 	}
 }

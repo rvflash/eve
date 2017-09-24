@@ -204,7 +204,7 @@ func TestRelease_Push(t *testing.T) {
 		src       deploy.Source
 		dst, more *client.RPC
 		ev1, ev2  []string
-		skip      []string
+		keep      []string
 		log       map[string][2]interface{}
 		err       error
 	}{
@@ -230,12 +230,12 @@ func TestRelease_Push(t *testing.T) {
 				"0_STR":   {"rv", nil},
 				"0_FLOAT": {nil, 3.14},
 			},
-			skip: []string{"bool"},
+			keep: []string{"str", "float"},
 		},
 		{
 			src: noEnv, dst: rpcClient,
 			ev1: []string{""}, ev2: []string{""},
-			skip: []string{"bool", "str", "float", "int"},
+			keep: []string{"rv"},
 			err:  deploy.ErrMissing,
 		},
 	}
@@ -244,7 +244,7 @@ func TestRelease_Push(t *testing.T) {
 		if err := r.Checkout(tt.ev1, tt.ev2); err != nil {
 			t.Fatalf("%d. unexpected error=%q", i, err)
 		}
-		if err := r.Push(tt.skip...); !reflect.DeepEqual(err, tt.err) {
+		if err := r.Push(tt.keep...); !reflect.DeepEqual(err, tt.err) {
 			t.Errorf("%d. error mismatch: got=%q exp=%q", i, err, tt.err)
 		}
 		if log := r.Log(); !reflect.DeepEqual(log, tt.log) {
