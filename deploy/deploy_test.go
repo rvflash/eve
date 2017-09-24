@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"testing"
 
+	"strconv"
+
 	"github.com/rvflash/eve/client"
 	"github.com/rvflash/eve/deploy"
 	cache "github.com/rvflash/eve/rpc"
@@ -30,13 +32,13 @@ func (c rpc) Call(service string, args, reply interface{}) error {
 		return nil
 	case "Cache.Get":
 		switch args {
-		case "bool":
+		case "0_BOOL":
 			reply.(*cache.Item).Value = false
 			return nil
-		case "int":
+		case "0_INT":
 			reply.(*cache.Item).Value = 12
 			return nil
-		case "str":
+		case "0_STR":
 			reply.(*cache.Item).Value = "rv"
 			return nil
 		}
@@ -51,6 +53,11 @@ var rpcClient = client.NewRPC(rpc(1))
 
 // src is the test's source.
 type src int
+
+// Key implements the deploy.Source interface.
+func (s src) Key() []byte {
+	return []byte(strconv.Itoa(int(s)))
+}
 
 // EnvsValues implements the deploy.Source interface.
 func (s src) EnvsValues() (firstEnvValues, secondEnvValues []string) {
@@ -70,14 +77,14 @@ func (s src) EnvsValues() (firstEnvValues, secondEnvValues []string) {
 func (s src) ToDeploy(firstEnvValues, secondEnvValues []string) map[string]interface{} {
 	switch s {
 	case twoEnv:
-		return map[string]interface{}{"dev_fr_bool": true, "dev_fr_float": 3.14}
+		return map[string]interface{}{"2_DEV_FR_BOOL": true, "2_DEV_FR_FLOAT": 3.14}
 	case oneEnv:
-		return map[string]interface{}{"dev_bool": true, "dev_float": 3.14}
+		return map[string]interface{}{"1_DEV_BOOL": true, "1_DEV_FLOAT": 3.14}
 	case noEnv:
 		if len(firstEnvValues) == 0 || len(secondEnvValues) == 0 {
 			return nil
 		}
-		return map[string]interface{}{"bool": true, "float": 3.14, "str": nil, "int": 12}
+		return map[string]interface{}{"0_BOOL": true, "0_FLOAT": 3.14, "0_STR": nil, "0_INT": 12}
 	}
 	return nil
 }
@@ -172,7 +179,9 @@ func TestRelease_Diff(t *testing.T) {
 			src: noEnv, dst: rpcClient,
 			ev1: []string{""}, ev2: []string{""},
 			task: &deploy.Task{Add: 1, Del: 1, NoOp: 1, Upd: 1},
-			diff: map[string]interface{}{"bool": true, "float": 3.14, "str": nil},
+			diff: map[string]interface{}{
+				"0_BOOL": true, "0_FLOAT": 3.14, "0_STR": nil,
+			},
 		},
 	}
 	for i, tt := range dt {
@@ -195,6 +204,8 @@ func TestRelease_Push(t *testing.T) {
 		src       deploy.Source
 		dst, more *client.RPC
 		ev1, ev2  []string
+		skip      []string
+		log       map[string][2]interface{}
 		err       error
 	}{
 		{src: errEnv, dst: rpcClient, err: deploy.ErrMissing},
@@ -206,6 +217,26 @@ func TestRelease_Push(t *testing.T) {
 		{
 			src: noEnv, dst: rpcClient,
 			ev1: []string{""}, ev2: []string{""},
+			log: map[string][2]interface{}{
+				"0_STR":   {"rv", nil},
+				"0_BOOL":  {false, true},
+				"0_FLOAT": {nil, 3.14},
+			},
+		},
+		{
+			src: noEnv, dst: rpcClient,
+			ev1: []string{""}, ev2: []string{""},
+			log: map[string][2]interface{}{
+				"0_STR":   {"rv", nil},
+				"0_FLOAT": {nil, 3.14},
+			},
+			skip: []string{"bool"},
+		},
+		{
+			src: noEnv, dst: rpcClient,
+			ev1: []string{""}, ev2: []string{""},
+			skip: []string{"bool", "str", "float", "int"},
+			err:  deploy.ErrMissing,
 		},
 	}
 	for i, tt := range dt {
@@ -213,8 +244,11 @@ func TestRelease_Push(t *testing.T) {
 		if err := r.Checkout(tt.ev1, tt.ev2); err != nil {
 			t.Fatalf("%d. unexpected error=%q", i, err)
 		}
-		if err := r.Push(); !reflect.DeepEqual(err, tt.err) {
+		if err := r.Push(tt.skip...); !reflect.DeepEqual(err, tt.err) {
 			t.Errorf("%d. error mismatch: got=%q exp=%q", i, err, tt.err)
+		}
+		if log := r.Log(); !reflect.DeepEqual(log, tt.log) {
+			t.Errorf("%d. log mismatch: got=%v exp=%v", i, log, tt.log)
 		}
 	}
 }
