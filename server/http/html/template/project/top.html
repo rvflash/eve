@@ -12,7 +12,11 @@
         </div>
         <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#newConstant">New variable</button>
         <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#delete{{if .Var}}Var{{else}}Project{{end}}">Delete</button>
+        {{if not .Servers}}
+        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#newNode">New cache</button>
+        {{else}}
         <a href="/projects/{{.Project.ID}}/deploy" class="btn btn-warning">Deploy</a>
+        {{end}}
     </div>
     <div class="modal fade" id="newConstant" tabindex="-1" role="dialog" aria-labelledby="newConstantModalLabel" aria-hidden="true" data-keyboard="true">
         <div class="modal-dialog" role="document">
@@ -172,4 +176,5 @@
         </div>
     </div>
     {{end}}
+    {{template "node.html" .}}
 </div>

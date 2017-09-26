@@ -9,6 +9,8 @@ import (
 	"html/template"
 	"net/http"
 
+	"strings"
+
 	"github.com/rvflash/elapsed"
 	"github.com/rvflash/eve/db"
 )
@@ -16,7 +18,14 @@ import (
 var (
 	tmplPath    = "./html/template"
 	tmplFuncMap = template.FuncMap{
+		// date
 		"elapsed": elapsed.Time,
+		// arithmetic
+		"inc": func(i int) int { return i + 1 },
+		"mod": func(i, j int) bool { return i%j == 0 },
+		"mul": func(i, j int) int { return i * j },
+		// strings
+		"join": func(s []string) string { return strings.Join(s, ", ") },
 	}
 )
 
@@ -31,6 +40,8 @@ func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		tmplPath+"/home.html",
 		tmplPath+"/home/top.html",
 		tmplPath+"/home/bottom.html",
+		tmplPath+"/common/form.html",
+		tmplPath+"/common/node.html",
 		tmplPath+"/common/header.html",
 		tmplPath+"/common/head.html",
 		tmplPath+"/common/foot.html",
@@ -44,11 +55,13 @@ func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	// Assigns vars to the templates.
 	type homeTmplVars struct {
 		tmplVars
-		Projects []db.Keyer
-		Err      error
+		Projects,
+		Servers []db.Keyer
+		Err error
 	}
 	hv := homeTmplVars{}
 	hv.Projects, hv.Err = s.db.Projects()
+	hv.Servers, _ = s.db.Nodes()
 
 	// Displays the page.
 	if err = t.Execute(w, hv); err != nil {

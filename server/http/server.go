@@ -45,14 +45,14 @@ func (s *Server) Route() {
 	default:
 		s.r.HandleFunc("/", s.HomeHandler)
 		s.r.HandleFunc("/envs", s.EnvsHandler)
+		s.r.HandleFunc("/nodes", s.NodesHandler)
 		s.r.HandleFunc("/projects", s.ProjectsHandler)
 		s.r.HandleFunc("/projects/{pid:[a-z-]+}/", s.ProjectHandler)
 		s.r.HandleFunc("/projects/{pid:[a-z-]+}/var", s.VarsHandler)
 		s.r.HandleFunc("/projects/{pid:[a-z-]+}/var/{vid:[0-9]+}", s.VarHandler)
 		s.r.HandleFunc("/projects/{pid:[a-z-]+}/var/{vid:[0-9]+}/delete", s.VarHandler)
+		s.r.HandleFunc("/projects/{pid:[a-z-]+}/deploy", s.DeployHandler)
 		//s.r.HandleFunc("/projects/{pid:[a-z-]+}/delete", s.ConstantsHandler)
-		//s.r.HandleFunc("/projects/search", SearchProjectsHandler)
-		//s.r.HandleFunc("/projects/{pid:[0-9]+}/search", ConstantHandler)
 		s.r.HandleFunc("/favicon.ico", s.StaticHandler)
 	}
 }

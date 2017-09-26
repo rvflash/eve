@@ -15,9 +15,9 @@ import (
 
 type projectTmplVars struct {
 	tmplVars
-	Project, Var db.Keyer
-	Envs         []db.Keyer
-	Kinds        []db.Kind
+	Project, Var  db.Keyer
+	Envs, Servers []db.Keyer
+	Kinds         []db.Kind
 }
 
 // ProjectsHandler display all information about a project.
@@ -35,6 +35,8 @@ func (s *Server) ProjectHandler(w http.ResponseWriter, r *http.Request) {
 		tmplPath+"/project.html",
 		tmplPath+"/project/top.html",
 		tmplPath+"/project/bottom.html",
+		tmplPath+"/common/form.html",
+		tmplPath+"/common/node.html",
 		tmplPath+"/common/header.html",
 		tmplPath+"/common/head.html",
 		tmplPath+"/common/foot.html",
@@ -51,6 +53,7 @@ func (s *Server) ProjectHandler(w http.ResponseWriter, r *http.Request) {
 	tv.Project = p
 	tv.Envs, _ = s.db.Envs()
 	tv.Kinds = db.Kinds
+	tv.Servers, _ = s.db.Nodes()
 
 	// Displays the page.
 	if err = t.Execute(w, tv); err != nil {

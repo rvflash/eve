@@ -1,0 +1,36 @@
+<script type="text/javascript">
+    function hAlert(kind, msg) {
+        return "<div class=\"alert alert-"+kind+"\" role=\"alert\">"+msg+"</div>"
+    }
+    function sendForm(event, form) {
+        event.preventDefault();
+        $.ajax({
+            method: "POST",
+            url: event.target.action,
+            data: form.serialize()
+        }).always(function () {
+            // Removes previous error message.
+            form.find(".alert").remove();
+        }).done(function(data) {
+            var s = data.response.toString()
+            if (data.response == ""){
+                // Displays the ok! message
+                form.find(".modal-body").prepend(hAlert("success", "request succeeded"));
+            } else {
+                // Redirects to the project page.
+                document.location = s;
+            }
+        }).fail(function(res) {
+            // Displays the error message.
+            var m = "unexpected error, please retry later";
+            if (typeof res.responseJSON !== "undefined"){
+                m = res.responseJSON.response;
+            }
+            if (form.attr("id") == "ufv") {
+                form.find(".table").before(hAlert("danger", m));
+            } else {
+                form.find(".modal-body").prepend(hAlert("danger", m));
+            }
+        });
+    }
+</script>

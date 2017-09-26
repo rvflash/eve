@@ -1,6 +1,11 @@
 <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
     <div class="btn-group btn-group-sm" role="nav" aria-label="Action">
         <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#newProject">New project</button>
+        {{if not .Servers}}
+        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#newNode">New cache</button>
+        {{else}}
+        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#mngNodes">Manage caches</button>
+        {{end}}
     </div>
     <div class="modal fade" id="newProject" tabindex="-1" role="dialog" aria-labelledby="newProjectModalLabel" aria-hidden="true" data-keyboard="true">
         <div class="modal-dialog" role="document">
@@ -30,4 +35,5 @@
             </div>
         </div>
     </div>
+    {{template "node.html" .}}
 </div>

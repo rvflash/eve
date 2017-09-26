@@ -54,13 +54,13 @@
             <h1>{{.Project.Name}}</h1>
             <hr class="my-4">
             <p class="lead mb-4">{{.Project.Description}}</p>
-            <div class="row">
+                <div class="row">
                 <div class="col-sm-4">
                     <div class="card mb-3">
-                        <div class="card-header">Last update</div>
+                        <div class="card-header">Details</div>
                         <div class="card-body">
-                            <p class="card-text text-center">{{.Project.LastUpdateTs.Format "Jan 02, 2006 15:04:05 UTC"}}</p>
-                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteProject">Delete the project</button>
+                            <p class="card-text">ID: {{.Project.ID}}<br />Last update: <span title="{{.Project.LastUpdateTs.Format "Jan 02, 2006 15:04:05 UTC"}}">{{elapsed .Project.LastUpdateTs}}</span></p></span></p>
+                            <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteProject">Delete the project</button>
                         </div>
                     </div>
                 </div>
@@ -68,24 +68,49 @@
                     <div class="card">
                         <div class="card-header">Constants</div>
                         <div class="card-body">
-                            <h4 class="card-title text-center">{{len .Project.Vars}}</h4>
-                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newConstant">Add another</button>
+                            <h2 class="card-title text-center py-2">{{len .Project.Vars}}</h2>
+                            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#newConstant">Add another</button>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-4">
-                    <div class="card">
-                        <div class="card-header bg-warning">Last deploy</div>
+                    <div class="card border-dark">
+                        <div class="card-header bg-dark text-white">Last deploy</div>
                         <div class="card-body">
-                            <p class="card-text text-center">
-                            {{if .Project.Deployed}}
-                                {{.Project.LastDeployTs.Format "Jan 02, 2006 15:04:05 UTC"}}
+                            <h2 class="card-title text-center py-2">{{elapsed .Project.LastDeployTs}}</h2>
+                            {{if not .Servers}}
+                            <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#newNode">New cache</button>
                             {{else}}
-                                Not yet
+                            <a href="/projects/{{.Project.ID}}/deploy" class="btn btn-warning btn-sm">Deploy</a>
+                            <button type="button" class="btn btn-outline-dark btn-sm" data-toggle="modal" data-target="#mngNodes">Manage caches</button>
                             {{end}}
-                            </p>
-                            <a href="/projects/{{.Project.ID}}/deploy" class="btn btn-warning">Deploy</a>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-group">
+                <div class="card mb-3">
+                    <div class="card-body">
+                    {{if not .Project.FirstEnv.Default}}
+                        <h4 class="card-title">{{.Project.FirstEnv.Name}}</h4>
+                        <p class="card-text">Values: {{join .Project.FirstEnv.Values}}</p>
+                    {{end}}
+                    </div>
+                    <div class="card-footer">
+                        {{if .Project.FirstEnv.Name}}<a href="/projects/{{.Project.FirstEnv.ID}}/" class="btn btn-outline-danger btn-sm">Delete</a>{{end}}
+                        <a href="/projects/{{.Project.FirstEnv.ID}}/" class="btn btn-dark btn-sm">Edit</a>
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-body">
+                    {{if not .Project.SecondEnv.Default}}
+                        <h4 class="card-title">{{.Project.SecondEnv.Name}}</h4>
+                        <p class="card-text">Values: {{join .Project.SecondEnv.Values}}</p>
+                    {{end}}
+                    </div>
+                    <div class="card-footer">
+                        {{if .Project.FirstEnv.Name}}<a href="/projects/{{.Project.FirstEnv.ID}}/" class="btn btn-outline-danger btn-sm">Delete</a>{{end}}
+                        <a href="/projects/{{.Project.FirstEnv.ID}}/" class="btn btn-dark btn-sm">Edit</a>
                     </div>
                 </div>
             </div>

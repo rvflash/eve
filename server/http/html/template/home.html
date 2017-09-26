@@ -2,7 +2,7 @@
 <header>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         {{template "header.html"}}
-        {{template "top.html"}}
+        {{template "top.html" .}}
     </nav>
 </header>
 <div class="container-fluid my-3">
@@ -21,23 +21,20 @@
         </p>
     </div>
     {{else}}
-    <div class="row">
-        {{range .Projects}}
-        <div class="col-sm-4 my-2">
-            <div class="card">
+    <div class="card-group">
+        {{range $i, $p := .Projects}}
+        {{if and (gt $i 0) (mod $i 3)}}</div><div class="card-group">{{end}}
+            <div class="card mb-3">
                 <div class="card-body">
-                    <h4 class="card-title">{{.Name}}</h4>
-                    <p class="card-text">{{.Description}}</p>
+                    <h4 class="card-title">{{$p.Name}}</h4>
+                    <p class="card-text">{{$p.Description}}</p>
+                    <a href="/projects/{{$p.ID}}/" class="btn btn-primary">Manage</a>
                 </div>
-                <ul class="list-group list-group-flush">
-                    {{if .LastUpdateTs}}<li class="list-group-item">Last update: <span title="{{.LastUpdateTs.Format "Jan 02, 2006 15:04:05 UTC"}}">{{elapsed .LastUpdateTs}}</span></li>{{end}}
-                    {{if .Deployed}}<li class="list-group-item bg-primary text-white">Last deploy: <span title="{{.LastDeployTs.Format "Jan 02, 2006 15:04:05 UTC"}}">{{elapsed .LastDeployTs}}</span></li>{{end}}
-                </ul>
-                <div class="card-body">
-                    <a href="/projects/{{.ID}}/" class="btn btn-primary">Manage</a>
+                <div class="card-footer">
+                    {{if $p.LastUpdateTs}}<small class="text-muted">Last updated <span title="{{$p.LastUpdateTs.Format "Jan 02, 2006 15:04:05 UTC"}}">{{elapsed $p.LastUpdateTs}}</span></small>{{end}}
+                    {{if $p.Deployed}}<br><small class="text-muted">Last deployed <span title="{{$p.LastDeployTs.Format "Jan 02, 2006 15:04:05 UTC"}}">{{elapsed $p.LastDeployTs}}</span></small>{{end}}
                 </div>
             </div>
-        </div>
         {{end}}
     </div>
     {{end}}
