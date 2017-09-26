@@ -1,3 +1,4 @@
+{{template "form.html"}}
 <script type="text/javascript">
     $(function() {
         // Manages environment.
@@ -17,26 +18,7 @@
         };
         // Saves and sends update on the variable.
         fv.submit(function(e) {
-            e.preventDefault();
-            var c = $(this)
-            $.ajax({
-                method: "POST",
-                url: e.target.action,
-                data: $(this).serialize()
-            }).always(function () {
-                // Removes previous error message.
-                c.find(".alert-danger").remove();
-            }).done(function(data) {
-                // Redirects to the project page.
-                document.location = data.response;
-            }).fail(function(res) {
-                // Displays the error message.
-                var m = "unexpected error, please retry later";
-                if (typeof res.responseJSON !== "undefined"){
-                    m = res.responseJSON.response;
-                }
-                c.find(".table").before("<div class=\"alert alert-danger\" role=\"alert\">"+m+"</div>");
-            });
+           sendForm(e, $(this));
         });
         // One to order all of them.
         fv.find("input.edit[type=text]").on('keyup change', function (){

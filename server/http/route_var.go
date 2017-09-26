@@ -72,6 +72,8 @@ func (h *varHandler) getHandler(w http.ResponseWriter, r *http.Request) {
 		tmplPath+"/var/table.html",
 		tmplPath+"/project/top.html",
 		tmplPath+"/project/bottom.html",
+		tmplPath+"/common/form.html",
+		tmplPath+"/common/node.html",
 		tmplPath+"/common/header.html",
 		tmplPath+"/common/head.html",
 		tmplPath+"/common/foot.html",
@@ -97,6 +99,7 @@ func (h *varHandler) getHandler(w http.ResponseWriter, r *http.Request) {
 	tv.Var = h.v
 	tv.Project = h.p
 	tv.Kinds = db.Kinds
+	tv.Servers, _ = h.s.db.Nodes()
 
 	// Displays the page.
 	if err = t.Execute(w, tv); err != nil {
