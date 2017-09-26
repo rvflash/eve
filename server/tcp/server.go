@@ -46,5 +46,8 @@ func (s *Server) Serve() {
 	if err != nil {
 		s.log.Fatal("Listen error:", err)
 	}
-	go http.Serve(l, nil)
+	err = http.Serve(l, nil)
+	if err != nil {
+		s.log.Fatal("Serve error:", err)
+	}
 }
