@@ -115,11 +115,13 @@ func (d *Release) Replicate() int {
 func (d *Release) Checkout(envs ...[]string) error {
 	// Checks if the values of the source slice matched with those in the reference.
 	in := func(src, ref []string) bool {
+		m := make(map[string]struct{}, len(ref))
+		for _, v := range ref {
+			m[v] = struct{}{}
+		}
 		for _, s := range src {
-			for _, r := range ref {
-				if s != r {
-					return false
-				}
+			if _, ok := m[s]; !ok {
+				return false
 			}
 		}
 		return true

@@ -23,7 +23,7 @@ func NewRPC(conn Caller) *RPC {
 }
 
 // OpenRPC returns an instance of RPC with a TCP connection into it.
-// DSN is in the form of "localhost:1010".
+// DSN is in the form of "localhost:9090".
 // If the connection fails, it returns the error.
 func OpenRPC(dsn string, timeout time.Duration) (*RPC, error) {
 	c, err := net.DialTimeout("tcp", dsn, timeout)

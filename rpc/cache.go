@@ -12,7 +12,7 @@ import (
 
 // DefaultPort is the port uses by default
 // to launch the RPC cache server.
-const DefaultPort = 1010
+const DefaultPort = 9090
 
 // DefaultTimeout is the default timeout in ms.
 const DefaultTimeout = 100 * time.Millisecond

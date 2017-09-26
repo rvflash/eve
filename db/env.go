@@ -30,6 +30,14 @@ func (s *Env) AutoIncrementing() bool {
 	return true
 }
 
+// Default returns true if the environment is a default env for Eve.
+func (s *Env) Default() bool {
+	if len(s.Values) == 1 && s.Values[0] == "" {
+		return true
+	}
+	return false
+}
+
 // Key returns the key of the env.
 func (s *Env) Key() []byte {
 	if s.ID == 0 {

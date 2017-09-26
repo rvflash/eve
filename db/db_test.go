@@ -30,7 +30,7 @@ func openDb() (*dbt, error) {
 }
 
 func (d *dbt) createNode() error {
-	return d.r.AddNode(db.NewNode(":1010"))
+	return d.r.AddNode(db.NewNode(":9090"))
 }
 
 func (d *dbt) createProject() error {
