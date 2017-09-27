@@ -103,7 +103,7 @@ func (p *Project) ToDeploy(firstEnvValues, secondEnvValues []string) map[string]
 	return deployed
 }
 
-// ToVars returns the list of variables that have values
+// ToVars returns the list of variables that are present
 // in the given map of deployed variables.
 // Only the variables that matched are returned.
 // Their values are limited to those available in entry.

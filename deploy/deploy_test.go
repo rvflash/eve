@@ -158,8 +158,16 @@ func TestRelease_Checkout(t *testing.T) {
 	}
 	for i, tt := range dt {
 		r := deploy.New(tt.src, tt.dst)
-		if err := r.Checkout(tt.ev1, tt.ev2); !reflect.DeepEqual(err, tt.err) {
-			t.Errorf("%d. error mismatch: got=%q exp=%q", i, err, tt.err)
+		err := r.Checkout(tt.ev1, tt.ev2)
+		if !reflect.DeepEqual(err, tt.err) {
+			t.Fatalf("%d. error mismatch: got=%q exp=%q", i, err, tt.err)
+		} else if err == nil {
+			if ev1 := r.FirstEnvValues(); tt.ev1 != nil && !reflect.DeepEqual(ev1, tt.ev1) {
+				t.Errorf("%d. first env values: got=%q exp=%q", i, ev1, tt.ev1)
+			}
+			if ev2 := r.SecondEnvValues(); tt.ev2 != nil && !reflect.DeepEqual(ev2, tt.ev2) {
+				t.Errorf("%d. second env values: got=%q exp=%q", i, ev2, tt.ev2)
+			}
 		}
 	}
 }

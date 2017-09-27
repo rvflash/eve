@@ -209,6 +209,18 @@ func (d *Release) Log() map[string][2]interface{} {
 	return log
 }
 
+// FirstEnvValues returns the values of the first environment
+// used to checkout the release.
+func (d *Release) FirstEnvValues() []string {
+	return d.env1
+}
+
+// SecondEnvValues returns the values of the second environment
+// used to checkout the release.
+func (d *Release) SecondEnvValues() []string {
+	return d.env2
+}
+
 // Push uploads via RPC to the cache servers all the required data
 // in one bulk.
 // It can take as parameter the exclusive list of variable's names to push.
