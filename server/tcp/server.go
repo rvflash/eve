@@ -7,7 +7,6 @@ package main
 import (
 	"log"
 	"net"
-	"net/http"
 	"net/rpc"
 	"os"
 	"strconv"
@@ -35,19 +34,16 @@ func NewServer(listenIP string, httpPort int) *Server {
 
 // Serve starts the server.
 func (s *Server) Serve() {
-	// Prepares the launching.
+	// Initializes the RPC server.
+	if err := rpc.Register(s.rpc); err != nil {
+		log.Fatal("Register error:", err)
+	}
+	// Launches it.
 	addr := s.Host + ":" + strconv.Itoa(s.Port)
 	s.log.Println("Serving " + addr)
-
-	// Launches it.
-	rpc.Register(s.rpc)
-	rpc.HandleHTTP()
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		s.log.Fatal("Listen error:", err)
 	}
-	err = http.Serve(l, nil)
-	if err != nil {
-		s.log.Fatal("Serve error:", err)
-	}
+	rpc.Accept(l)
 }
