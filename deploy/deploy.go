@@ -175,13 +175,50 @@ func (d *Release) Checkout(envs ...[]string) error {
 	return nil
 }
 
+// Changes returns all changes computed by variable.
+type Changes struct {
+	Var string
+	Log map[string][2]interface{}
+}
+
 // Diff fetches from and merge data to return only the differences
 // according to their values in one of the cache instance.
 // For a given key, if it not exists in cache, a nil value is returned.
 // If it exists with an other value, its value is returned.
 // If it exists with the same value, nothing is returned.
-func (d *Release) Diff() map[string]interface{} {
-	return d.merge()
+func (d *Release) Diff() map[string]*Changes {
+	m := d.merge()
+	if len(m) == 0 {
+		return nil
+	}
+	// Builds the list of available prefixes of deploy keys
+	// with project name and env values.
+	prefix := make([]string, 0)
+	for _, ev1 := range d.env1 {
+		for _, ev2 := range d.env2 {
+			pid := string(d.ref.Key())
+			prefix = append(prefix, Key(pid, ev1, ev2)+"_")
+		}
+	}
+	// Returns only the name of the variable from the deploy key.
+	name := func(s string) string {
+		for _, v := range prefix {
+			if strings.HasPrefix(s, v) {
+				return strings.TrimPrefix(s, v)
+			}
+		}
+		panic("deploy: fails to find prefix in deploy key named: " + s)
+	}
+	c := make(map[string]*Changes)
+	for k, v := range d.dep {
+		n := name(k)
+		if _, ok := c[n]; !ok {
+			c[n] = &Changes{Var: n, Log: make(map[string][2]interface{})}
+		}
+		cv, _ := d.dst[k]
+		c[n].Log[k] = change(cv, v)
+	}
+	return c
 }
 
 // Log shows the push's logs.
@@ -201,12 +238,19 @@ func (d *Release) Log() map[string][2]interface{} {
 		// In the first position, we have the value before the push,
 		// then, in the second, the value after the push.
 		v, _ := d.dst[k]
-		log[k] = [2]interface{}{v, nv}
+		log[k] = change(v, nv)
 	}
 	if len(log) == 0 {
 		return nil
 	}
 	return log
+}
+
+// change return an array with values.
+// In the first position, we have the value before the push,
+// then, in the second, the value after the push.
+func change(before, after interface{}) [2]interface{} {
+	return [2]interface{}{before, after}
 }
 
 // FirstEnvValues returns the values of the first environment

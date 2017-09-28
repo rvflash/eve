@@ -179,7 +179,7 @@ func TestRelease_Diff(t *testing.T) {
 		src      deploy.Source
 		dst      *client.RPC
 		ev1, ev2 []string
-		diff     map[string]interface{}
+		diff     map[string]*deploy.Changes
 		task     *deploy.Task
 	}{
 		{src: errEnv, dst: rpcClient, task: &deploy.Task{}},
@@ -187,8 +187,10 @@ func TestRelease_Diff(t *testing.T) {
 			src: noEnv, dst: rpcClient,
 			ev1: []string{""}, ev2: []string{""},
 			task: &deploy.Task{Add: 1, Del: 1, NoOp: 1, Upd: 1},
-			diff: map[string]interface{}{
-				"0_BOOL": true, "0_FLOAT": 3.14, "0_STR": nil,
+			diff: map[string]*deploy.Changes{
+				"BOOL":  {Var: "BOOL", Log: map[string][2]interface{}{"0_BOOL": {false, true}}},
+				"FLOAT": {Var: "FLOAT", Log: map[string][2]interface{}{"0_FLOAT": {nil, 3.14}}},
+				"STR":   {Var: "STR", Log: map[string][2]interface{}{"0_STR": {"rv", nil}}},
 			},
 		},
 	}

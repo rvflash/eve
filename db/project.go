@@ -87,6 +87,11 @@ func (p *Project) ToDeploy(firstEnvValues, secondEnvValues []string) map[string]
 	if len(envs) == 0 {
 		return nil
 	}
+	//  returns the variable's key used by the deployment.
+	deployKey := func(varID, varName string) string {
+		i := NewVarID(varID)
+		return deploy.Key(p.ID, i.EnvValue1, i.EnvValue2, varName)
+	}
 	// Builds the list of values that match the environments to deploy.
 	deployed := make(map[string]interface{})
 	for _, d := range p.vars {
@@ -96,43 +101,11 @@ func (p *Project) ToDeploy(firstEnvValues, secondEnvValues []string) map[string]
 				if v.Deleted() {
 					value = nil
 				}
-				deployed[p.deployKey(key, v.Name)] = value
+				deployed[deployKey(key, v.Name)] = value
 			}
 		}
 	}
 	return deployed
-}
-
-// ToVars returns the list of variables that are present
-// in the given map of deployed variables.
-// Only the variables that matched are returned.
-// Their values are limited to those available in entry.
-func (p *Project) ToVars(data map[string]interface{}) []Keyer {
-	if len(data) == 0 {
-		return nil
-	}
-	vars := make([]Keyer, 0)
-	for _, d := range p.vars {
-		v := d.(*Var)
-		e := make(EnvsValue, 0)
-		for key := range v.Values {
-			dKey := p.deployKey(key, v.Name)
-			if dValue, ok := data[dKey]; ok {
-				e[key] = dValue
-			}
-		}
-		if len(e) > 0 {
-			v.Values = e
-			vars = append(vars, v)
-		}
-	}
-	return vars
-}
-
-// deployKey returns the variable's key used by the deplpyment.
-func (p *Project) deployKey(varID, varName string) string {
-	i := NewVarID(varID)
-	return deploy.Key(p.ID, i.EnvValue1, i.EnvValue2, varName)
 }
 
 // Vars returns all the variables of the project.
