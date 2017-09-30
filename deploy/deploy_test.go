@@ -149,6 +149,11 @@ func TestNew(t *testing.T) {
 	if i := r.Replicate(); i != 2 {
 		t.Errorf("server size mismatch: got=%d exp=2", i)
 	}
+	// Try with one void destination.
+	r = deploy.New(noEnv, deploy.ServerLess, rpcClient)
+	if i := r.Replicate(); i != 1 {
+		t.Errorf("server size mismatch: got=%d exp=1", i)
+	}
 }
 
 // TestRelease_Checkout tests the method Checkout on Release.

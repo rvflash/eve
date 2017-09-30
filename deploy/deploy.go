@@ -125,9 +125,17 @@ func New(src Source, server Dest, more ...Dest) *Release {
 	return &Release{ref: src, to: servers, task: &Task{}}
 }
 
-// Replicate returns the number of servers used to save the data.
+// Replicate returns the real number of servers used to save the data.
 func (d *Release) Replicate() int {
-	return len(d.to)
+	size := 0
+	for _, dest := range d.to {
+		switch dest.(type) {
+		case *devNull:
+		default:
+			size++
+		}
+	}
+	return size
 }
 
 // Checkout allows to define until 2 environments.
