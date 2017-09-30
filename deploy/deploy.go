@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
-	"github.com/rvflash/eve/client"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -71,6 +70,29 @@ func (t *Task) percentOf(i uint64) uint64 {
 	return 0
 }
 
+// devNull is a void instance of Dest to force the deployment
+// of all variables. It's exported by ServerLess.
+type devNull struct{}
+
+// Bulk implements the Dest interface.
+func (s *devNull) Bulk(data map[string]interface{}) error {
+	return nil
+}
+
+// Lookup implements the Dest interface.
+func (s *devNull) Lookup(key string) (interface{}, bool) {
+	return nil, false
+}
+
+// A /dev/null server instance to force the push of all data.
+var ServerLess = &devNull{}
+
+// Dest must be implemented by any client to deploy data.
+type Dest interface {
+	Bulk(data map[string]interface{}) error
+	Lookup(key string) (interface{}, bool)
+}
+
 // Source must be implemented by any source want to be deployed.
 // Key returns the identifier of the project.
 // EnvsValues returns the values of each environments behind the project.
@@ -84,7 +106,7 @@ type Source interface {
 // Release represents a new deployment.
 type Release struct {
 	ref           Source
-	to            []*client.RPC
+	to            []Dest
 	env1, env2    []string
 	src, dst, dep map[string]interface{}
 	task          *Task
@@ -92,8 +114,8 @@ type Release struct {
 }
 
 // New returns a new Release.
-func New(src Source, server *client.RPC, more ...*client.RPC) *Release {
-	servers := make([]*client.RPC, 1)
+func New(src Source, server Dest, more ...Dest) *Release {
+	servers := make([]Dest, 1)
 	servers[0] = server
 	for i := 0; i < len(more); i++ {
 		if more[i] != nil {

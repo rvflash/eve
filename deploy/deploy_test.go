@@ -16,6 +16,20 @@ import (
 	cache "github.com/rvflash/eve/rpc"
 )
 
+// TestServerLess tests the ServerLess usage.
+func TestServerLess(t *testing.T) {
+	d, ok := deploy.ServerLess.Lookup("rv")
+	if d != nil {
+		t.Fatalf("lookup data mismatch: got=%v exp=%v", d, nil)
+	} else if ok {
+		t.Fatalf("lookup found mismatch: got=%v exp=%v", ok, false)
+	}
+	data := map[string]interface{}{"rv": nil}
+	if err := deploy.ServerLess.Bulk(data); err != nil {
+		t.Fatalf("bulk error: got=%q exp=%q", err, nil)
+	}
+}
+
 // rpc is the test's RPC client.
 type rpc int
 
@@ -141,7 +155,7 @@ func TestNew(t *testing.T) {
 func TestRelease_Checkout(t *testing.T) {
 	var dt = []struct {
 		src      deploy.Source
-		dst      *client.RPC
+		dst      deploy.Dest
 		ev1, ev2 []string
 		err      error
 	}{
@@ -177,7 +191,7 @@ func TestRelease_Checkout(t *testing.T) {
 func TestRelease_Diff(t *testing.T) {
 	var dt = []struct {
 		src      deploy.Source
-		dst      *client.RPC
+		dst      deploy.Dest
 		ev1, ev2 []string
 		diff     map[string]*deploy.Changes
 		task     *deploy.Task
@@ -212,7 +226,7 @@ func TestRelease_Diff(t *testing.T) {
 func TestRelease_Push(t *testing.T) {
 	var dt = []struct {
 		src       deploy.Source
-		dst, more *client.RPC
+		dst, more deploy.Dest
 		ev1, ev2  []string
 		keep      []string
 		log       map[string][2]interface{}
