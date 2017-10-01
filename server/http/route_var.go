@@ -61,7 +61,7 @@ func (h *varHandler) deleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Redirects to the variable's page.
-	loc := fmt.Sprintf("/projects/%s/", h.rv["pid"])
+	loc := fmt.Sprintf("/project/%s/", h.rv["pid"])
 	h.s.jsonHandler(w, loc, http.StatusOK)
 }
 
@@ -95,7 +95,7 @@ func (h *varHandler) getHandler(w http.ResponseWriter, r *http.Request) {
 		VarIDTie:    db.VarIDTie,
 	}
 	tv.Title = h.p.(*db.Project).Name
-	tv.Href = "/projects/" + h.rv["pid"] + "/"
+	tv.Href = "/project/" + h.rv["pid"] + "/"
 	tv.Var = h.v
 	tv.Project = h.p
 	tv.Kinds = db.Kinds
@@ -155,6 +155,6 @@ func (s *Server) VarsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Redirects to the project page.
 	vid := binary.BigEndian.Uint64(c.Key())
-	loc := fmt.Sprintf("/projects/%s/var/%d", vars["pid"], vid)
+	loc := fmt.Sprintf("/project/%s/var/%d", vars["pid"], vid)
 	s.jsonHandler(w, loc, http.StatusOK)
 }

@@ -8,7 +8,7 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -22,6 +22,19 @@ type deployTmplVars struct {
 	Step    int
 	Release *deploy.Release
 	Err     error
+}
+
+// NodeHandler deletes a server node.
+func (s *Server) NodeHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	// Tries to delete this server's address.
+	n := db.NewNode(vars["naddr"])
+	if err := s.db.DeleteNode(n); err != nil {
+		s.jsonHandler(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	s.jsonHandler(w, "", http.StatusOK)
 }
 
 // NodesHandler enables to create a node.
@@ -70,7 +83,7 @@ func (s *Server) DeployHandler(w http.ResponseWriter, r *http.Request) {
 	// Assigns vars to the templates.
 	tv := deployTmplVars{}
 	tv.Title = p.(*db.Project).Name
-	tv.Href = "/projects/" + vars["pid"] + "/"
+	tv.Href = "/project/" + vars["pid"] + "/"
 	tv.Project = p
 	if tv.Servers, tv.Err = s.nodes(); tv.Err == nil {
 		tv.Step, tv.Release, tv.Err = s.deploy(p, tv.Servers, r)
@@ -81,10 +94,9 @@ func (s *Server) DeployHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) deploy(p db.Keyer, w []db.Keyer, r *http.Request) (step int, out *deploy.Release, err error) {
-	values := func(s string) []string {
-		return strings.Split(s, ",")
-	}
+func (s *Server) deploy(p db.Keyer, w []db.Keyer, r *http.Request) (
+	step int, out *deploy.Release, err error,
+) {
 	toMap := func(s []string) map[string]struct{} {
 		m := make(map[string]struct{}, len(s))
 		for _, v := range s {
@@ -93,20 +105,29 @@ func (s *Server) deploy(p db.Keyer, w []db.Keyer, r *http.Request) (step int, ou
 		return m
 	}
 	r.ParseForm()
-	ev1 := values(r.Form.Get("ev1"))
-	ev2 := values(r.Form.Get("ev2"))
-	project := p.(*db.Project)
 
+	// Checks the project envs to bypass the checkout page.
+	project := p.(*db.Project)
+	if project.FirstEnv().Default() {
+		r.Form["ev1"] = []string{""}
+	}
+	if project.SecondEnv().Default() {
+		r.Form["ev2"] = []string{""}
+	}
 	// Nothing to checkout
+	if len(r.Form["ev1"]) == 0 || len(r.Form["ev2"]) == 0 {
+		return
+	}
+	// Gets all env values of the project.
 	eev1, eev2 := project.EnvsValues()
 	cev1 := toMap(eev1)
-	for _, v := range ev1 {
+	for _, v := range r.Form["ev1"] {
 		if _, ok := cev1[v]; !ok {
 			return
 		}
 	}
 	cev2 := toMap(eev2)
-	for _, v := range ev2 {
+	for _, v := range r.Form["ev2"] {
 		if _, ok := cev2[v]; !ok {
 			return
 		}
@@ -114,7 +135,7 @@ func (s *Server) deploy(p db.Keyer, w []db.Keyer, r *http.Request) (step int, ou
 	step = 1
 
 	// Checkout the project and initialize the release.
-	nodes := make([]*client.RPC, len(w))
+	nodes := make([]deploy.Dest, len(w))
 	for k, v := range w {
 		nodes[k], err = client.OpenRPC(v.(*db.Node).Addr, 500*time.Millisecond)
 		if err != nil {
@@ -122,16 +143,23 @@ func (s *Server) deploy(p db.Keyer, w []db.Keyer, r *http.Request) (step int, ou
 			return
 		}
 	}
+	force, _ := strconv.Atoi(r.Form.Get("force"))
+	if force == 1 {
+		// A force push is required.
+		// Adds a fake destination as main server to do that.
+		nodes = append([]deploy.Dest{deploy.ServerLess}, nodes...)
+	}
 	out = deploy.New(project, nodes[0], nodes[1:]...)
-	if err = out.Checkout(ev1, ev2); err != nil {
+	if err = out.Checkout(r.Form["ev1"], r.Form["ev2"]); err != nil {
 		return
 	}
-	vars := values(r.Form.Get("vars"))
-	if len(vars) == 0 {
+	if len(r.Form["vars"]) == 0 && force == 0 {
+		// Force push does not required
 		return
 	}
 	step = 2
-	err = out.Push(vars...)
+	err = out.Push(r.Form["vars"]...)
+
 	return
 }
 

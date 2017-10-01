@@ -1,16 +1,13 @@
 {{template "form.html"}}
 <script type="text/javascript">
     $(function() {
-        // Manages environment.
-        var sv = $("#scopeValue");
-        var asv = $("#scopeValues");
-        var tsv =  $("#scopeValueTags");
         // Adds a tag.
-        $("#addScopeValue").click(function() {
+        $(".add-env").click(function() {
             // Removes previous action.
+            var sv = $(this).parent().siblings("[name='val']");
             sv.removeClass("is-invalid");
             // Comma is used as separator, so we banned it.
-            var v = $.trim(sv.val()).replace(/,/g, '');
+            var v = $.trim(sv.val()).replace(/,/g, "");
             if (v == "") {
                 // Missing value.
                 sv.addClass("is-invalid");
@@ -18,50 +15,62 @@
             }
             sv.val("");
             // Add it as environment values.
-            var e = false;
+            var asv = $(this).parent().siblings("[name='vals']");
+            var ok = false;
             var a = asv.val().split(",");
             if (a.length > 0) {
-                $.each(a,function(i){
+                $.each(a, function(i){
                     if (a[i] == v) {
-                        e = true
+                        ok = true
                         return false
                     }
                 });
             }
-            if (e == false) {
-                asv.val(asv.val() + "," + v);
-                var n = tsv.find("[hidden]").clone().appendTo(tsv).removeAttr("hidden")
-                // Add behavior to remove it.
-                n.find("button.close").click(function() {
-                    var v = $(this).siblings().text();
-                    if (v == "") {
-                        return
-                    }
-                    // Removes it as environment values.
-                    var a = asv.val().split(",");
-                    if (a.length > 0) {
-                        $.each(a,function(i){
-                            if (a[i] == v) {
-                                delete a[i];
-                                return false
-                            }
-                        });
-                        asv.val(a.join(","));
-                    }
-                    $(this).parent().parent().remove();
-                });
-                n.find(".tag").text(v);
-            } else {
+            if (ok) {
                 // Tag already exists.
                 sv.addClass("is-invalid");
+            } else {
+                createTagList(v, asv, $(this).parents("form").find(".tags-env"));
             }
         });
-        // Creates a environment or a variable.
-        $("#nfs, #nfsa, #nfc").submit(function(e) {
+        // Creates a environment, a variable or a node.
+        $("#nfe, #nfc, #nfn, #mfe").submit(function(e) {
             sendForm(e, $(this));
         });
-        // Delete one element.
-        $("#deleteVar, #deleteProject").find("a").click(function(e) {
+        // Manages nodes list.
+        mngList($("#mngNodes").find(".list-group"));
+        // Edits one env.
+        var ee = $("a.edit-env");
+        ee.click(function(e) {
+            e.preventDefault();
+            var c = $(this);
+            if (c.hasClass("disabled")) {
+                return
+            }
+            // Disabled edition.
+            ee.addClass("disabled")
+            // Resets
+            $("#mfe").attr("action", "#");
+            $("#updEnvName").val("");
+            $("#updEnvValues").val("");
+            $("#updEnvValueTags > div").not("[hidden]").remove();
+            // Loads the environment's properties to edit them.
+            $.ajax({
+                url: c.attr("href"),
+            }).always(function () {
+                // Enables re-edition.
+                ee.removeClass("disabled")
+            }).done(function(data) {
+                // Redirects to the required page.
+                $("#updEnvName").val(data.name);
+                data.vals.forEach(function(tag) {
+                    createTagList(tag, $("#updEnvValues"), $("#updEnvValueTags"));
+                });
+                $("#mfe").attr("action", c.attr("href"));
+            });
+        });
+        // Deletes or binds one element.
+        $("#deleteVar, #deleteProject, #addEnv").find("a").click(function(e) {
             e.preventDefault();
             var c = $(this)
             var b = c.parent().siblings(".modal-body");
@@ -82,7 +91,7 @@
                 b.prepend("<div class=\"alert alert-danger\" role=\"alert\">"+m+"</div>");
             });
         });
-        // Searches inside the list of project's constant.
+        // Searches inside the list of project's variables.
         var s = $("#searchVar");
         s.find("input").keyup(function() {
             s.find("a[hidden]").removeAttr("hidden");

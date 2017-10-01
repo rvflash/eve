@@ -1,108 +1,146 @@
 {{template "head.html"}}
-<header xmlns="http://www.w3.org/1999/html">
+<header>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         {{template "header.html" .}}
     </nav>
 </header>
 <div class="container-fluid my-3">
-    <form action="/projects/{{.Project.ID}}/deploy" method="post" id="ufe">
-        <h2>Deploy: {{if not .Step}}checkout{{else if eq .Step 1}}differences with the production{{else}}push's log{{end}}</h2>
-        <div class="progress mt-4">
-            {{$step := inc .Step}}{{$progress := mul $step 33}}
-            <div class="progress-bar" role="progressbar" style="width:{{$progress}}%; height: 1px;" aria-valuenow="{{$progress}}" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-        {{if .Err}}
-        <div class="alert alert-danger mt-4" role="alert">
-            {{.Err}}
-        </div>
-        {{end}}
-        {{if not .Step}}
-        <div class="card-group my-4">
-            <div class="card">
-                <div class="card-header">Choose the environments to update</div>
-                <div class="card-body">
-                    <h4 class="card-title">{{.Project.FirstEnv.Name}}</h4>
-                    <div data-toggle="buttons">
-                        {{range .Project.FirstEnv.Values}}
-                        <label class="btn btn-outline-dark btn-sm{{if not .}}active{{end}}">
-                            <input type="checkbox" name="ev1" value="{{.}}" autocomplete="off" {{if not .}}checked{{end}}> {{.}}
-                        </label>
-                        {{end}}
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">&nbsp;</div>
-                <div class="card-body">
-                    <h4 class="card-title">{{.Project.SecondEnv.Name}}</h4>
-                    <div data-toggle="buttons">
-                        {{range .Project.SecondEnv.Values}}
-                        <label class="btn btn-outline-dark btn-sm{{if not .}}active{{end}}">
-                            <input type="checkbox" name="ev2" value="{{.}}" autocomplete="off" {{if not .}}checked{{end}}> {{.}}
-                        </label>
-                        {{end}}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <button type="submit" class="btn btn-sm btn-primary">See changes</button>
-        {{else if eq .Step 1}}
-        {{$diff := len .Release.Diff}}
-        <div class="d-flex justify-content-end py-3">
-            <div class="mr-auto">Updates: {{$diff}}</div>
-            <div>
-                <a href="/projects/{{.Project.ID}}/" class="btn btn-secondary btn-sm">Cancel</a>
-                <button type="submit" class="btn btn-sm btn-primary">Push changes</button>
-            </div>
-        </div>
-        <div class="progress">
-        {{if $diff}}
-            {{$pctAdd := .Release.Status.PctOfAdd}}<div class="progress-bar bg-success" role="progressbar" style="width:{{$pctAdd}}%" aria-valuenow="{{$pctAdd}}" aria-valuemin="0" aria-valuemax="100">NEW</div>
-            {{$pctUpd := .Release.Status.PctOfUpd}}<div class="progress-bar" role="progressbar" style="width:{{$pctUpd}}%" aria-valuenow="{{$pctUpd}}" aria-valuemin="0" aria-valuemax="100">UPD</div>
-            {{$pctDel := .Release.Status.PctOfDel}}<div class="progress-bar bg-danger" role="progressbar" style="width:{{$pctDel}}%" aria-valuenow="{{$pctDel}}" aria-valuemin="0" aria-valuemax="100">DEL</div>
-        {{end}}
-        </div>
-        <div class="card-group my-4">
-            <div class="card">
-                <div class="card-header">
-                    <label class="custom-control custom-checkbox mb-0">
-                        <input type="checkbox" name="vars" class="custom-control-input" value="" checked>
-                        <span class="custom-control-indicator"></span>
-                        <span class="custom-control-description">bool</span>
+<form action="/project/{{.Project.ID}}/deploy" method="post" id="ufe">
+    <h2>Deploy: {{if not .Step}}checkout{{else if eq .Step 1}}differences{{else}}push log{{end}}</h2>
+    <div class="progress mt-4">
+        {{$step := inc .Step}}{{$progress := mul $step 33}}
+        <div class="progress-bar" role="progressbar" style="width:{{$progress}}%; height: 1px;" aria-valuenow="{{$progress}}" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+{{if .Err}}
+    <div class="alert alert-danger mt-4" role="alert">{{.Err}}</div>
+{{else if not .Step}}
+    <div class="card-group my-4">
+        <div class="card">
+            <div class="card-header">Choose the environments to update</div>
+            <div class="card-body">
+                <h4 class="card-title">{{.Project.FirstEnv.Name}}</h4>
+                <div data-toggle="buttons">
+                    {{range .Project.FirstEnv.Values}}
+                    <label class="btn btn-outline-dark btn-sm{{if not .}}active{{end}}">
+                        <input type="checkbox" name="ev1" value="{{.}}" autocomplete="off" {{if not .}}checked{{end}}> {{.}}
                     </label>
-                </div>
-                <div class="card-body">
-                    <table class="table table-striped table-sm table-responsive table-hover ">
-                        <thead>
-                        <tr>
-                            <th>sdf</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>
-                                dsd
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                    {{end}}
                 </div>
             </div>
         </div>
-
-        <a href="/projects/{{.Project.ID}}/" class="btn btn-secondary btn-sm">Cancel</a>
-        <button type="submit" class="btn btn-sm btn-primary">Push changes</button>
-        {{else if not .Err}}
-        <div class="alert alert-success" role="alert">
-            <h4 class="alert-heading">Well done!</h4>
-            <p>This is a success, {{len .Release.Log}} change(s) has been pushed on {{.Release.Replicate}} server(s).</p>
-            <hr>
-            <p class="mb-0">
-                <a href="/projects/{{.Project.ID}}/" class="btn btn-success btn-sm">Go to project's home</a>
-            </p>
+        {{if not .Project.SecondEnv.Default}}
+        <div class="card">
+            <div class="card-header">&nbsp;</div>
+            <div class="card-body">
+                <h4 class="card-title">{{.Project.SecondEnv.Name}}</h4>
+                <div data-toggle="buttons">
+                    {{range .Project.SecondEnv.Values}}
+                    <label class="btn btn-outline-dark btn-sm{{if not .}}active{{end}}">
+                        <input type="checkbox" name="ev2" value="{{.}}" autocomplete="off" {{if not .}}checked{{end}}> {{.}}
+                    </label>
+                    {{end}}
+                </div>
+            </div>
         </div>
         {{end}}
-    </form>
+    </div>
+    <button type="submit" class="btn btn-sm btn-primary">See changes</button>
+{{else if eq .Step 1}}
+    {{$diff := len .Release.Diff}}
+    {{range $.Release.FirstEnvValues}}<input type="hidden" name="ev1" value="{{.}}">{{end}}
+    {{range $.Release.SecondEnvValues}}<input type="hidden" name="ev2" value="{{.}}">{{end}}
+    {{if not $diff}}
+    <input type="hidden" name="force" value="1">
+    <div class="alert alert-warning mt-4" role="alert">No change to deploy.</div>
+    <a href="/project/{{.Project.ID}}/deploy" class="btn btn-secondary btn-sm">Cancel</a>
+    <button type="submit" class="btn btn-sm btn-primary">Force push</button>
+    {{else}}
+    <div class="d-flex justify-content-end py-3">
+        <div class="mr-auto">Updates: {{$diff}}</div>
+        <div>
+            <a href="/project/{{.Project.ID}}/deploy" class="btn btn-secondary btn-sm">Cancel</a>
+            <button type="submit" class="btn btn-sm btn-primary">Push changes</button>
+        </div>
+    </div>
+    <div class="progress">
+        {{with $pctAdd := .Release.Status.PctOfAdd}}<div class="progress-bar bg-success" role="progressbar" style="width:{{$pctAdd}}%" aria-valuenow="{{$pctAdd}}" aria-valuemin="0" aria-valuemax="100">NEW</div>{{end}}
+        {{with $pctUpd := .Release.Status.PctOfUpd}}<div class="progress-bar" role="progressbar" style="width:{{$pctUpd}}%" aria-valuenow="{{$pctUpd}}" aria-valuemin="0" aria-valuemax="100">UPD</div>{{end}}
+        {{with $pctDel := .Release.Status.PctOfDel}}<div class="progress-bar bg-danger" role="progressbar" style="width:{{$pctDel}}%" aria-valuenow="{{$pctDel}}" aria-valuemin="0" aria-valuemax="100">DEL</div>{{end}}
+    </div>
+    {{$ev1s := len .Release.FirstEnvValues}}{{$ev1d := mul $ev1s 2}}{{$width := div 85 $ev1d}}
+    {{range $kd, $vd := .Release.Diff}}
+    <div class="card-group my-4">
+        <div class="card">
+            <div class="card-header">
+                <label class="custom-control custom-checkbox mb-0">
+                    <input type="checkbox" name="vars" class="custom-control-input" value="{{$kd}}" checked>
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description">{{$kd}}</span>
+                </label>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-sm table-responsive table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th scope="row" style="width: 15%">{{$.Project.SecondEnv.Name}} \ {{$.Project.FirstEnv.Name}}</th>
+                        {{range $.Release.FirstEnvValues}}
+                        <th class="text-primary text-center" colspan="2">{{.}}</th>
+                        {{end}}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{range $kl, $vl := $.Release.SecondEnvValues}}
+                    <tr>
+                        <td class="text-dark font-weight-bold">{{$vl}}</td>
+                        {{range $kc, $vc := $.Release.FirstEnvValues}}
+                        {{$kv := env $.Project.ID $vc $vl $kd}}
+                        {{$vv := index $vd.Log $kv}}
+                        {{$pv := index $vv 0}}<td style="width:{{$width}}%" class="text-right text-secondary">{{if null $pv}}<span class="badge badge-success">New</span>{{else}}{{$pv}}{{end}}</td>
+                        {{$nv := index $vv 1}}<td style="width:{{$width}}%" class="text-primary">{{if null $nv}}<span class="badge badge-danger">Deleted</span>{{else}}{{$nv}}{{end}}</td>
+                        {{end}}
+                    </tr>
+                    {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {{end}}
+    <a href="/project/{{.Project.ID}}/deploy" class="btn btn-secondary btn-sm">Cancel</a>
+    <button type="submit" class="btn btn-sm btn-primary">Push changes</button>
+    {{end}}
+{{else}}
+    <div class="alert alert-success mt-4" role="alert">
+        <h4 class="alert-heading">Well done!</h4>
+        <p>This is a success, {{len .Release.Log}} change(s) has been pushed on {{.Release.Replicate}} server(s).</p>
+        <hr>
+        <p class="mb-0">
+            <a href="/project/{{.Project.ID}}/" class="btn btn-success btn-sm">Go to project's home</a>
+            <a href="#details" class="btn btn-light btn-sm" data-toggle="collapse" aria-expanded="false" aria-controls="collapseExample">See details</a>
+        </p>
+    </div>
+    <div class="collapse" id="details">
+        <table class="table table-bordered table-striped table-responsive">
+            <thead>
+            <tr>
+                <th>Variable name</th>
+                <th class="text-center" style="width: 15%">Old value</th>
+                <th class="text-center" style="width: 15%">New value</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{range $kl, $vl := .Release.Log}}
+            <tr>
+                <td>{{$kl}}</td>
+                {{$pv := index $vl 0}}<td class="text-center text-secondary">{{if null $pv}}<span class="badge badge-success">New</span>{{else}}{{$pv}}{{end}}</td>
+                {{$nv := index $vl 1}}<td class="text-center text-primary">{{if null $nv}}<span class="badge badge-danger">Deleted</span>{{else}}{{$nv}}{{end}}</td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+    </div>
+{{end}}
+</form>
 </div>
 {{template "footer.html"}}
 {{template "foot.html"}}

@@ -1,41 +1,44 @@
 <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
     <div class="btn-group btn-group-sm" role="nav" aria-label="Action">
+        {{$nev := len .Project.EnvList}}{{if lt $nev 2}}
         <div class="btn-group btn-group-sm" role="group">
-            <button id="scopeGroup" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                New environment
-            </button>
-            <div class="dropdown-menu" aria-labelledby="scopeGroup">
-                <a class="dropdown-item" data-toggle="modal" data-target="#newScope">Create a new</a>
-                <a class="dropdown-item" data-toggle="modal" data-target="#addScope">Add an existing environment</a>
-                <a class="dropdown-item" data-toggle="modal" data-target="#newScope">Manage all</a>
+            {{if not .Envs}}
+            <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#newEnv">New environment</button>
+            {{else}}
+            <button id="envGroup" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">New environment</button>
+            <div class="dropdown-menu" aria-labelledby="envGroup">
+                <a class="dropdown-item" data-toggle="modal" data-target="#newEnv">Create a new</a>
+                <a class="dropdown-item" data-toggle="modal" data-target="#addEnv">Add an existing environment</a>
             </div>
+            {{end}}
         </div>
-        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#newConstant">New variable</button>
+        {{end}}
+        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#newVar">New variable</button>
         <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#delete{{if .Var}}Var{{else}}Project{{end}}">Delete</button>
         {{if not .Servers}}
         <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#newNode">New cache</button>
         {{else}}
-        <a href="/projects/{{.Project.ID}}/deploy" class="btn btn-warning">Deploy</a>
+        <a href="/project/{{.Project.ID}}/deploy" class="btn btn-warning">Deploy</a>
         {{end}}
     </div>
-    <div class="modal fade" id="newConstant" tabindex="-1" role="dialog" aria-labelledby="newConstantModalLabel" aria-hidden="true" data-keyboard="true">
+    <div class="modal fade" id="newVar" tabindex="-1" role="dialog" aria-labelledby="newVarModalLabel" aria-hidden="true" data-keyboard="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="newConstantModalLabel">New variable</h5>
+                    <h5 class="modal-title" id="newVarModalLabel">New variable</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="/projects/{{.Project.ID}}/var" method="post" id="nfc">
+                <form action="/project/{{.Project.ID}}/var" method="post" id="nfc">
                     <div class="modal-body">
                         <div class="form-group">
-                            <label for="constantName" class="form-control-label">Name:</label>
-                            <input type="text" class="form-control" id="constantName" name="name" pattern="[a-zA-Z0-9-_]+" required>
+                            <label for="varName" class="form-control-label">Name:</label>
+                            <input type="text" class="form-control" id="varName" name="name" pattern="[a-zA-Z0-9-_]+" required>
                         </div>
                         <div class="form-group">
-                            <label for="constantKind">Kind:</label>
-                            <select class="form-control" id="constantKind" name="kind">
+                            <label for="varKind">Kind:</label>
+                            <select class="form-control" id="varKind" name="kind">
                                 {{range .Kinds}}
                                 <option value="{{.Int}}">{{.String}}</option>
                                 {{end}}
@@ -51,32 +54,24 @@
         </div>
     </div>
     {{if .Envs}}
-    <div class="modal fade" id="addScope" tabindex="-1" role="dialog" aria-labelledby="addScopeModalLabel" aria-hidden="true" data-keyboard="true">
+    <div class="modal fade" id="addEnv" tabindex="-1" role="dialog" aria-labelledby="addEnvModalLabel" aria-hidden="true" data-keyboard="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="addScopeModalLabel">Add an existing environment</h5>
+                    <h5 class="modal-title" id="addEnvModalLabel">Add an existing environment</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="/projects/{{.Project.ID}}/env" method="post" id="nfas">
                 <div class="modal-body">
                     <div class="row">
                     {{range .Envs}}
-                        <div class="col-sm-12">
+                        <div class="col-sm-12 mb-3">
                             <div class="card">
-                                <h6 class="card-header">
-                                    <label class="mb-0">
-                                        <input type="checkbox" name="envs" value="{{.ID}}" autocomplete="off" class="mr-2"> {{.Name}}
-                                    </label>
-                                </h6>
-                                <div class="card-body">
-                                    <p class="card-text">
-                                        {{range .Values}}
-                                        <span class="badge badge-dark">{{.}}</span>
-                                        {{end}}
-                                    </p>
+                                <h6 class="card-header">{{.Name}}</h6>
+                                <div class="card-body p-3 d-flex justify-content-end">
+                                    <p class="mb-0 mr-auto">{{join .Values}}</p>
+                                    <a href="/project/{{$.Project.ID}}/env/{{.ID}}/bind" data-target="#newVar" class="btn btn-primary btn-sm">Use it</a>
                                 </div>
                             </div>
                         </div>
@@ -84,39 +79,37 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </div>
-                </form>
             </div>
         </div>
     </div>
     {{end}}
-    <div class="modal fade" id="newScope" tabindex="-1" role="dialog" aria-labelledby="newScopeModalLabel" aria-hidden="true" data-keyboard="true">
+    <div class="modal fade" id="newEnv" tabindex="-1" role="dialog" aria-labelledby="newEnvModalLabel" aria-hidden="true" data-keyboard="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="newScopeModalLabel">New environment</h5>
+                    <h5 class="modal-title" id="newEnvModalLabel">New environment</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="/envs" method="post" id="nfs">
+                <form action="/project/{{.Project.ID}}/env" method="post" id="nfe">
                     <div class="modal-body">
                         <div class="form-group">
-                            <label for="scopeName" class="form-control-label">Name:</label>
-                            <input type="text" class="form-control" id="scopeName" name="name" required>
+                            <label for="envName" class="form-control-label">Name:</label>
+                            <input type="text" class="form-control" id="envName" name="name" required>
                         </div>
                         <div class="form-group">
                             <div class="input-group">
-                                <span class="input-group-addon" id="scopeValueLabel">Value</span>
-                                <input type="text" class="form-control" pattern="[a-zA-Z0-9-_]+" title="Only accepts alphanumeric chars" placeholder="Label..." aria-label="Label..." aria-describedby="scopeValueLabel" id="scopeValue" name="val">
+                                <span class="input-group-addon" id="envValueLabel">Value</span>
+                                <input type="text" class="form-control" pattern="[a-zA-Z0-9-_]+" title="Only accepts alphanumeric chars" placeholder="Label..." aria-label="Label..." aria-describedby="envValueLabel" id="envValue" name="val">
                                 <input type="hidden" name="pid" value="{{.Project.ID}}">
-                                <input type="hidden" name="vals" id="scopeValues">
-                                <span class="input-group-btn"><button class="btn btn-secondary" type="button" id="addScopeValue">Add</button></span>
+                                <input type="hidden" name="vals" id="envValues">
+                                <span class="input-group-btn"><button class="btn btn-dark add-env" type="button">Add</button></span>
                             </div>
                         </div>
-                        <div class="row pr-3" id="scopeValueTags">
+                        <div class="row pr-3 tags-env">
                             <div class="col-sm-4 pr-0" hidden>
                                 <div class="alert p-2 alert-secondary alert-dismissible fade show" role="tag">
                                     <button type="button" class="close" aria-label="Close">
@@ -130,6 +123,49 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modEnv" tabindex="-1" role="dialog" aria-labelledby="modEnvModalLabel" aria-hidden="true" data-keyboard="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modEnvModalLabel">Modify the environment</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="/env/id" method="post" id="mfe">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="updEnvName" class="form-control-label">Name:</label>
+                            <input type="text" class="form-control" id="updEnvName" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon" id="updEnvValueLabel">Value</span>
+                                <input type="text" class="form-control" pattern="[a-zA-Z0-9-_]+" title="Only accepts alphanumeric chars" placeholder="Label..." aria-label="Label..." aria-describedby="updEnvValueLabel" id="updEnvValue" name="val">
+                                <input type="hidden" name="pid" value="{{.Project.ID}}">
+                                <input type="hidden" name="vals" id="updEnvValues">
+                                <span class="input-group-btn"><button class="btn btn-dark add-env" type="button">Add</button></span>
+                            </div>
+                        </div>
+                        <div class="row pr-3 tags-env" id="updEnvValueTags">
+                            <div class="col-sm-4 pr-0" hidden>
+                                <div class="alert p-2 alert-secondary alert-dismissible fade show" role="tag">
+                                    <button type="button" class="close" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                    <span class="tag">env</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
                     </div>
                 </form>
             </div>
@@ -150,7 +186,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <a href="/projects/{{$.Project.ID}}/var/{{.Var.ID}}/delete" class="btn btn-primary">Delete</a>
+                    <a href="/project/{{$.Project.ID}}/var/{{.Var.ID}}/delete" class="btn btn-primary">Delete</a>
                 </div>
             </div>
         </div>
@@ -170,7 +206,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <a href="/projects/{{$.Project.ID}}/delete" class="btn btn-primary">Delete</a>
+                    <a href="/project/{{$.Project.ID}}/delete" class="btn btn-primary">Delete</a>
                 </div>
             </div>
         </div>

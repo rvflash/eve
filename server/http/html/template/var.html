@@ -1,5 +1,5 @@
 {{template "head.html"}}
-<header xmlns="http://www.w3.org/1999/html">
+<header>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         {{template "header.html" .}}
         {{template "top.html" .}}
@@ -17,13 +17,13 @@
             <div class="list-group small">
             {{range .Project.Vars}}
                 {{if not .Deleted}}
-                <a href="/projects/{{$.Project.ID}}/var/{{.ID}}" class="list-group-item px-3 py-2">{{.Name}}</a>
+                <a href="/project/{{$.Project.ID}}/var/{{.ID}}" class="list-group-item px-3 py-2">{{.Name}}</a>
                 {{end}}
             {{end}}
             </div>
         </div>
         <main class="col-12 col-md-9 col-xl-10">
-            <form action="/projects/{{$.Project.ID}}/var/{{.Var.ID}}" method="post" id="ufv">
+            <form action="/project/{{$.Project.ID}}/var/{{.Var.ID}}" method="post" id="ufv">
                 <h2><span class="badge badge-secondary">{{.Var.Kind}}</span> {{.Var.Name}}</h2>
                 <hr class="mt-4 mb-2">
                 <div class="d-flex justify-content-end pb-3">
@@ -38,10 +38,10 @@
                     <strong>Warning!</strong> The project's environments have evolved and some of the values has been ignored.
                 </div>
                 {{end}}
-                <table class="table table-striped table-sm table-responsive table-hover ">
+                <table class="table table-striped table-sm table-responsive table-hover">
                     <thead>
                         <tr>
-                            <th>{{.Project.FirstEnv.Name}} / {{.Project.SecondEnv.Name}}</th>
+                            <th scope="row">{{.Project.SecondEnv.Name}} \ {{.Project.FirstEnv.Name}}</th>
                             {{range .Project.FirstEnv.Values}}
                             <th class="text-primary">{{.}}</th>
                             {{end}}
@@ -53,7 +53,7 @@
                     <tbody>
                     {{range $kl, $vl := .Project.SecondEnv.Values}}
                     <tr>
-                        <td scope="row" class="text-dark font-weight-bold">{{$vl}}</td>
+                        <td class="text-dark font-weight-bold">{{$vl}}</td>
                         {{range $kc, $vc := $.Project.FirstEnv.Values}}
                         {{$kv := printf "%s%s%s%s" $.VarIDPrefix $vc $.VarIDTie $vl}}
                         {{$vv := index $.Var.Values $kv}}

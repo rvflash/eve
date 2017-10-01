@@ -13,19 +13,25 @@ import (
 
 	"github.com/rvflash/elapsed"
 	"github.com/rvflash/eve/db"
+	"github.com/rvflash/eve/deploy"
 )
 
 var (
 	tmplPath    = "./html/template"
 	tmplFuncMap = template.FuncMap{
+		// deployment
+		"env": deploy.Key,
 		// date
 		"elapsed": elapsed.Time,
 		// arithmetic
 		"inc": func(i int) int { return i + 1 },
 		"mod": func(i, j int) bool { return i%j == 0 },
 		"mul": func(i, j int) int { return i * j },
+		"div": func(i, j int) float64 { return float64(i) / float64(j) },
 		// strings
 		"join": func(s []string) string { return strings.Join(s, ", ") },
+		// interface
+		"null": func(d interface{}) bool { return d == nil },
 	}
 )
 
@@ -94,4 +100,12 @@ func (s *Server) jsonHandler(w http.ResponseWriter, res string, code int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	fmt.Fprintf(w, `{"code": %d, "response": %q}`, code, res)
+}
+
+// jsonAppHandler writes the given slice of bytes and sends a HTTP valid code.
+// This slice of bytes must be a JSON string.
+func (s *Server) jsonAppHandler(w http.ResponseWriter, data []byte) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	w.Write(data)
 }

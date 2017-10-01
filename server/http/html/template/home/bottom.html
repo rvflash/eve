@@ -1,8 +1,11 @@
 {{template "form.html"}}
 <script type="text/javascript">
     $(function() {
+        // Creates a project or a node.
         $("#nfp, #nfn").submit(function(e) {
             sendForm(e, $(this));
         });
+        // Manages nodes list.
+        mngList($("#mngNodes").find(".list-group"));
     });
 </script>

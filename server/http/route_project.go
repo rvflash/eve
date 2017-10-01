@@ -48,10 +48,11 @@ func (s *Server) ProjectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Assigns vars to the templates.
+	pr := p.(*db.Project)
 	tv := projectTmplVars{}
-	tv.Title = p.(*db.Project).Name
-	tv.Project = p
-	tv.Envs, _ = s.db.Envs()
+	tv.Title = pr.Name
+	tv.Project = pr
+	tv.Envs, _ = s.db.Envs(pr.EnvList)
 	tv.Kinds = db.Kinds
 	tv.Servers, _ = s.db.Nodes()
 
@@ -76,6 +77,6 @@ func (s *Server) ProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Redirects to the new project page.
-	loc := fmt.Sprintf("/projects/%s/", p.Key())
+	loc := fmt.Sprintf("/project/%s/", p.Key())
 	s.jsonHandler(w, loc, http.StatusOK)
 }

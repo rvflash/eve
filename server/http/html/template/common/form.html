@@ -14,10 +14,8 @@
         }).done(function(data) {
             var s = data.response.toString()
             if (data.response == ""){
-                // Displays the ok! message
-                form.find(".modal-body").prepend(hAlert("success", "request succeeded"));
+                document.location.reload();
             } else {
-                // Redirects to the project page.
                 document.location = s;
             }
         }).fail(function(res) {
@@ -32,5 +30,56 @@
                 form.find(".modal-body").prepend(hAlert("danger", m));
             }
         });
+    }
+    function mngList(list) {
+        list.find("a.close").click(function(e) {
+            e.preventDefault()
+            var c = $(this)
+            var b = list.parent(".modal-body");
+            $.ajax({
+                url: c.attr("href"),
+            }).always(function () {
+                // Removes previous error message.
+                b.find(".alert-danger").remove();
+            }).done(function(data) {
+                // Removes the element and displays a no more message in necessary.
+                c.parent().remove();
+                if (list.find("li").length == 0) {
+                    var m = "no more element";
+                    list.replaceWith("<div class=\"alert alert-warning\" role=\"alert\">"+m+"</div>")
+                }
+            }).fail(function(res) {
+                // Displays the error message.
+                var m = "unexpected error, please retry later";
+                if (typeof res.responseJSON !== "undefined"){
+                    m = res.responseJSON.response;
+                }
+                b.prepend("<div class=\"alert alert-danger\" role=\"alert\">"+m+"</div>");
+            });
+        });
+    }
+    function createTagList(tag, list, to) {
+        list.val(list.val() + "," + tag);
+        var n = to.find("[hidden]").clone().appendTo(to).removeAttr("hidden")
+        // Add behavior to remove it.
+        n.find("button.close").click(function() {
+            var v = $(this).siblings().text();
+            if (v == "") {
+                return
+            }
+            // Removes it as environment values.
+            var a = list.val().split(",");
+            if (a.length > 0) {
+                $.each(a,function(i){
+                    if (a[i] == v) {
+                        delete a[i];
+                        return false
+                    }
+                });
+                list.val(a.join(","));
+            }
+            $(this).parent().parent().remove();
+        });
+        n.find(".tag").text(tag);
     }
 </script>
