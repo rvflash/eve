@@ -150,9 +150,28 @@ func (m *Data) UpsertProject(p *Project) error {
 	})
 }
 
-// Envs returns the list of available envs.
-func (m *Data) Envs() ([]Keyer, error) {
-	return m.all(envs)
+// Envs returns the list of available envs and skip those
+// to ignore as asked.
+func (m *Data) Envs(ignores []uint64) ([]Keyer, error) {
+	all, err := m.all(envs)
+	if err != nil {
+		return nil, err
+	}
+	var size int
+	if size = len(ignores); size == 0 {
+		return all, nil
+	}
+	skip := make(map[uint64]struct{}, size)
+	for _, i := range ignores {
+		skip[i] = struct{}{}
+	}
+	envs := make([]Keyer, 0)
+	for _, env := range all {
+		if _, ok := skip[env.(*Env).ID]; !ok {
+			envs = append(envs, env)
+		}
+	}
+	return envs, nil
 }
 
 // GetEnv returns an error or the env if it exists.
