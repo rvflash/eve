@@ -14,10 +14,11 @@ var DefaultCacheDuration = 15 * time.Minute
 
 // Cache represents the service to access data as a memory cache.
 type Cache struct {
-	data       map[string]*cacheItem
-	mu         *sync.RWMutex
-	recycle    *time.Ticker
-	expiration time.Duration
+	data          map[string]*cacheItem
+	mu            *sync.RWMutex
+	recycle       *time.Ticker
+	expiration    time.Duration
+	withoutExpire bool
 }
 
 // NewCache returns a new instance of the cache and starts the recycler.
@@ -78,11 +79,24 @@ func (c *Cache) Set(key string, value interface{}) error {
 	return nil
 }
 
+// WithExpire reactivates the item's expiration.
+func (c *Cache) WithExpire() {
+	c.withoutExpire = false
+}
+
+// WithoutExpire deactivates the item's expiration.
+func (c *Cache) WithoutExpire() {
+	c.withoutExpire = true
+}
+
 func (c *Cache) clean() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	// Removes all expired items.
+	if c.withoutExpire {
+		return
+	}
 	for key, item := range c.data {
 		if item.expired() {
 			delete(c.data, key)
@@ -99,7 +113,7 @@ func (c *Cache) lookup(key string) (interface{}, bool) {
 	if !ok {
 		return nil, ok
 	}
-	if item.expired() {
+	if !c.withoutExpire && item.expired() {
 		// Item has expired, deletes it.
 		delete(c.data, key)
 		return nil, false

@@ -11,7 +11,7 @@ import (
 	"github.com/rvflash/eve/client"
 )
 
-func TestCache_Workflow(t *testing.T) {
+func TestCacheWorkflow(t *testing.T) {
 	d := time.Millisecond * 250
 	c := client.NewCache(d)
 	defer func() {
@@ -87,6 +87,23 @@ func TestCache_Workflow(t *testing.T) {
 		t.Fatalf("expected no error on deletion: got=%q", err)
 	}
 	// Looks for the deleted variable.
+	if _, ok := c.Lookup(k); ok {
+		t.Fatal("expected key not found")
+	}
+	// Disables the purge.
+	c.WithoutExpire()
+	// Sets a variable.
+	if err := c.Set(k, v); err != nil {
+		t.Fatalf("expected no error on setting: got=%q", err)
+	}
+	// Break to stand by the limit of the cache expiration.
+	time.Sleep(d)
+	// Looks for the deleted variable.
+	if _, ok := c.Lookup(k); !ok {
+		t.Fatal("expected key found")
+	}
+	// Reactivates the item's expiration.
+	c.WithExpire()
 	if _, ok := c.Lookup(k); ok {
 		t.Fatal("expected key not found")
 	}
