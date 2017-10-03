@@ -91,7 +91,9 @@ func TestCacheWorkflow(t *testing.T) {
 		t.Fatal("expected key not found")
 	}
 	// Disables the purge.
-	c.WithoutExpire()
+	if c.NoExpiration(); !c.WithExpiration() {
+		t.Fatal("expected no item expiration")
+	}
 	// Sets a variable.
 	if err := c.Set(k, v); err != nil {
 		t.Fatalf("expected no error on setting: got=%q", err)
@@ -103,7 +105,9 @@ func TestCacheWorkflow(t *testing.T) {
 		t.Fatal("expected key found")
 	}
 	// Reactivates the item's expiration.
-	c.WithExpire()
+	if c.UseExpiration(); c.WithExpiration() {
+		t.Fatal("expected item expiration")
+	}
 	if _, ok := c.Lookup(k); ok {
 		t.Fatal("expected key not found")
 	}

@@ -79,14 +79,19 @@ func (c *Cache) Set(key string, value interface{}) error {
 	return nil
 }
 
-// WithExpire reactivates the item's expiration.
-func (c *Cache) WithExpire() {
-	c.withoutExpire = false
+// WithExpire returns true if the data expiration is enabled.
+func (c *Cache) WithExpiration() bool {
+	return c.withoutExpire
 }
 
 // WithoutExpire deactivates the item's expiration.
-func (c *Cache) WithoutExpire() {
+func (c *Cache) NoExpiration() {
 	c.withoutExpire = true
+}
+
+// UseExpiration reactivates the item's expiration.
+func (c *Cache) UseExpiration() {
+	c.withoutExpire = false
 }
 
 func (c *Cache) clean() {

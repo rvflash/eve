@@ -6,6 +6,7 @@ package eve
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rvflash/eve/client"
@@ -25,63 +26,94 @@ var (
 	OS    = &client.OS{}
 )
 
+// DefaultHandler defines the sort order to use to fetch data source.
+// By default, eve tries to get the variable's value:
+// > In its own memory cache.
+// > In the list of available environment variables.
+// The Eve client only sets variables in its own cache.
+var DefaultHandler = Handler{0: Cache, 1: OS}
+
+// Handler returns the list of data sources in the order
+// in which they are used.
+type Handler map[int]client.Getter
+
+// Add adds a client to the scheduler.
+func (h Handler) Add(src client.Getter) Handler {
+	h[len(h)] = src
+	return h
+}
+
 // Client represents the EVE client to handle the data sources.
 type Client struct {
 	project,
 	firstEnv, secondEnv string
+	alive *time.Ticker
 	Handler
 }
 
 // New returns an instance of a Client.
 // The first parameter is the project's identifier.
-// The second, optional, represents a list of dsn to use as remote rpc cache.
-// The syntax of one addr is "host:port", like "127.0.0.1:9090".
-// If host is omitted, addr must be like ":9090".
-func New(project string, addr ...string) (*Client, error) {
+// The second, optional, represents a list of data getter.
+func New(project string, servers ...client.Getter) *Client {
+	// Sets the tick to check the freshness of the data.
+	tick := int(client.DefaultCacheDuration) / 2
 	c := &Client{
 		project: project,
 		Handler: DefaultHandler,
+		alive:   time.NewTicker(time.Duration(tick)),
 	}
-	if len(addr) == 0 {
-		return nil, ErrDataSource
-	}
-	for _, dsn := range addr {
-		rpc, err := client.OpenRPC(dsn, client.DefaultCacheDuration)
-		if err != nil {
-			return c, err
+	// Checks if at least one server is alive.
+	go func() {
+		for range c.alive.C {
+			c.fresh()
 		}
-		c.Handler.Add(rpc)
+	}()
+	// Adds more servers as data source.
+	for i := 0; i < len(servers); i++ {
+		c.Handler.Add(servers[i])
 	}
-	return c, nil
+	return c
 }
 
-// Lazy is like New but it returns on error only if
-// in the list of requested remote RPC services, none are alive.
-func Lazy(project string, addr ...string) (*Client, error) {
-	c := &Client{
-		project: project,
-		Handler: DefaultHandler,
-	}
-	e := ErrDataSource
-	for _, dsn := range addr {
-		rpc, err := client.OpenRPC(dsn, client.DefaultCacheDuration)
-		if err != nil {
-			e = errors.WithMessage(e, err.Error())
-			continue
+// Checks if at least one RPC cache is available.
+// If not, we need to deactivate the cache expiration of
+// the local cache to preserve its values.
+func (c *Client) fresh() {
+	var alive bool
+	for _, h := range c.Handler {
+		if c, ok := h.(*client.RPC); ok {
+			if _, err := c.Stats(); err == nil {
+				alive = true
+				return
+			}
 		}
-		c.Handler.Add(rpc)
 	}
-	if e != nil && len(c.Handler) == len(DefaultHandler) {
-		return c, e
+	// Returns the local cache if used.
+	cache := func() *client.Cache {
+		for _, h := range c.Handler {
+			if cache, ok := h.(*client.Cache); ok {
+				return cache
+			}
+		}
+		return nil
+	}()
+	if cache == nil {
+		return
 	}
-	return c, nil
+	if alive {
+		if !cache.WithExpiration() {
+			cache.UseExpiration()
+		}
+	} else if cache.WithExpiration() {
+		cache.NoExpiration()
+	}
 }
 
-// SetEnvs allows to define until 2 environments.
+// Envs allows to define until 2 environments.
 // The adding's order is important, the first must be
 // the first environment defined in the EVE's project.
 // It returns an error if the number of environment is unexpected.
-func (c *Client) SetEnvs(envs ...string) error {
+func (c *Client) Envs(envs ...string) error {
 	switch len(envs) {
 	case 2:
 		c.secondEnv = envs[1]
@@ -242,17 +274,18 @@ func (c *Client) deployKey(key string) string {
 	return deploy.Key(c.project, c.firstEnv, c.secondEnv, key)
 }
 
-// DefaultHandler defines the sort order to use to fetch data source.
-// By default, eve tries to get the variable's value:
-// > In its own memory cache.
-// > In the list of available environment variables.
-var DefaultHandler = Handler{0: Cache, 1: OS}
-
-// Handler returns the list of data sources in the order in which they are used.
-type Handler map[int]client.GetSetter
-
-// Add adds a client to the scheduler.
-func (h Handler) Add(src client.GetSetter) Handler {
-	h[len(h)] = src
-	return h
+// Caches try to connect each net addr and returns them.
+func Servers(addr ...string) (caches []client.Getter, err error) {
+	replicate := len(addr)
+	if replicate == 0 {
+		return nil, ErrDataSource
+	}
+	caches = make([]client.Getter, replicate)
+	for p, dsn := range addr {
+		caches[p], err = client.OpenRPC(dsn, client.DefaultCacheDuration)
+		if err != nil {
+			return
+		}
+	}
+	return
 }
