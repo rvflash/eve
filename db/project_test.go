@@ -8,7 +8,6 @@ import (
 	"github.com/rvflash/eve/db"
 )
 
-// TestProject applies the basic tests on a project.
 func TestNewProject(t *testing.T) {
 	var tt = struct {
 		id,
@@ -65,8 +64,7 @@ func TestNewProject(t *testing.T) {
 	}
 }
 
-// TestNewProject_Envs tests the management of the environments on a project.
-func TestNewProject_Envs(t *testing.T) {
+func TestNewProjectEnvs(t *testing.T) {
 	var dt = []struct {
 		in, in1         *db.Env
 		err, err1, err2 error
@@ -112,8 +110,7 @@ func TestNewProject_Envs(t *testing.T) {
 	}
 }
 
-// TestNewProject_Vars tests the management of the variables on a project.
-func TestNewProject_Vars(t *testing.T) {
+func TestNewProjectVars(t *testing.T) {
 	var dt = []struct {
 		in        *db.Var
 		err, err1 error

@@ -157,7 +157,7 @@ func TestNew(t *testing.T) {
 }
 
 // TestRelease_Checkout tests the method Checkout on Release.
-func TestRelease_Checkout(t *testing.T) {
+func TestReleaseCheckout(t *testing.T) {
 	var dt = []struct {
 		src      deploy.Source
 		dst      deploy.Dest
@@ -193,7 +193,7 @@ func TestRelease_Checkout(t *testing.T) {
 
 // TestRelease_Diff tests all Release methods associated to
 // show the difference between local and cached data.
-func TestRelease_Diff(t *testing.T) {
+func TestReleaseDiff(t *testing.T) {
 	var dt = []struct {
 		src      deploy.Source
 		dst      deploy.Dest
@@ -228,7 +228,7 @@ func TestRelease_Diff(t *testing.T) {
 }
 
 // TestRelease_Push tests the Push methods on Release.
-func TestRelease_Push(t *testing.T) {
+func TestReleasePush(t *testing.T) {
 	var dt = []struct {
 		src       deploy.Source
 		dst, more deploy.Dest

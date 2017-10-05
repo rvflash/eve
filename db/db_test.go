@@ -133,7 +133,6 @@ func (d *dbt) stop() error {
 	return os.Remove(dbTest)
 }
 
-// TestOpen tests the method to open a database.
 func TestOpen(t *testing.T) {
 	var dt = []struct {
 		in  string
@@ -161,8 +160,7 @@ func TestOpen(t *testing.T) {
 	}
 }
 
-// TestData_Nodes tests the method to list the server nodes.
-func TestData_Nodes(t *testing.T) {
+func TestDataNodes(t *testing.T) {
 	// Opens the database.
 	dbt, err := openDb()
 	if err != nil {
@@ -182,8 +180,7 @@ func TestData_Nodes(t *testing.T) {
 	}
 }
 
-// TestData_Projects tests the method to list the projects.
-func TestData_Projects(t *testing.T) {
+func TestDataProjects(t *testing.T) {
 	// Opens the database.
 	dbt, err := openDb()
 	if err != nil {
@@ -203,8 +200,7 @@ func TestData_Projects(t *testing.T) {
 	}
 }
 
-// TestData_Envs tests the method to list the environments.
-func TestData_Envs(t *testing.T) {
+func TestDataEnvs(t *testing.T) {
 	// Opens the database.
 	dbt, err := openDb()
 	if err != nil {
@@ -224,8 +220,7 @@ func TestData_Envs(t *testing.T) {
 	}
 }
 
-// TestData_Project tests the creation, modification and deletion of a project.
-func TestData_Project(t *testing.T) {
+func TestDataProject(t *testing.T) {
 	// Opens the database.
 	dbt, err := openDb()
 	if err != nil {
@@ -308,8 +303,7 @@ func TestData_Project(t *testing.T) {
 	}
 }
 
-// TestData_Var tests the creation, binding and unbinding on project of a var.
-func TestData_Var(t *testing.T) {
+func TestDataVar(t *testing.T) {
 	// Opens the database.
 	dbt, err := openDb()
 	if err != nil {
@@ -487,7 +481,7 @@ func TestData_Var(t *testing.T) {
 	}
 }
 
-func TestData_VarLifeCycle(t *testing.T) {
+func TestDataVarLifeCycle(t *testing.T) {
 	// Opens the database.
 	dbt, err := openDb()
 	if err != nil {
@@ -540,8 +534,7 @@ func TestData_VarLifeCycle(t *testing.T) {
 	}
 }
 
-// TestData_Env tests the creation, modification of an environment.
-func TestData_Env(t *testing.T) {
+func TestDataEnv(t *testing.T) {
 	// Opens the database.
 	dbt, err := openDb()
 	if err != nil {

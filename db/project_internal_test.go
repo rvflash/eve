@@ -5,8 +5,7 @@ import (
 	"testing"
 )
 
-// TestProject_Envs tests the methods Envs.
-func TestProject_Envs(t *testing.T) {
+func TestProjectEnvs(t *testing.T) {
 	var dt = []struct {
 		im, is, om, os *Env
 	}{

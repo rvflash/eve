@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// List of value's kind.
 const (
 	// Unknown values
 	Unknown Kind = iota

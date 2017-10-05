@@ -8,7 +8,6 @@ import (
 	"github.com/rvflash/eve/db"
 )
 
-// TestNewKind tests the Kind struct.
 func TestNewKind(t *testing.T) {
 	var dt = []struct {
 		i, id             int
@@ -45,8 +44,7 @@ func TestNewKind(t *testing.T) {
 	}
 }
 
-// TestKind_Assert tests the method Assert on a Kind.
-func TestKind_Assert(t *testing.T) {
+func TestKindAssert(t *testing.T) {
 	var dt = []struct {
 		on      db.Kind
 		in, out interface{}
@@ -70,8 +68,7 @@ func TestKind_Assert(t *testing.T) {
 	}
 }
 
-// TestKind_Parse tests the method ParseValue on a Var.
-func TestKind_Parse(t *testing.T) {
+func TestKindParse(t *testing.T) {
 	var dt = []struct {
 		on  *db.Var
 		in  string
@@ -116,7 +113,6 @@ func TestKind_Parse(t *testing.T) {
 	}
 }
 
-// TestNewVarID tests the method NewVarID.
 func TestNewVarID(t *testing.T) {
 	var dt = []struct {
 		in  string
@@ -137,8 +133,7 @@ func TestNewVarID(t *testing.T) {
 	}
 }
 
-// TestVar_SetValues tests the method SetValues on a Var.
-func TestVar_SetValues(t *testing.T) {
+func TestVarSetValues(t *testing.T) {
 	var dt = []struct {
 		on  *db.Var
 		in  map[string]string
@@ -193,8 +188,7 @@ func TestVar_SetValues(t *testing.T) {
 	}
 }
 
-// TestVar_CleanValues tests the method CleanValues on a Var.
-func TestVar_CleanValues(t *testing.T) {
+func TestVarCleanValues(t *testing.T) {
 	var dt = []struct {
 		on      *db.Var
 		with    [2]*db.Env
