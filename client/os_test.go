@@ -22,7 +22,7 @@ var (
 	osClient = &client.OS{}
 )
 
-func TestOS_Get(t *testing.T) {
+func TestOSGet(t *testing.T) {
 	for i, tt := range osTests {
 		if out := osClient.Get(tt.in); tt.out != out {
 			t.Fatalf("%d. content mismatch for %s: exp=%q got=%q", i, tt.in, tt.out, out)
@@ -30,7 +30,7 @@ func TestOS_Get(t *testing.T) {
 	}
 }
 
-func TestOS_Lookup(t *testing.T) {
+func TestOSLookup(t *testing.T) {
 	for i, tt := range osTests {
 		if s, ok := osClient.Lookup(tt.in); tt.ok != ok {
 			t.Fatalf("%d. lookup fails for %s: exp=%q got=%q", i, tt.in, tt.ok, ok)
@@ -40,7 +40,38 @@ func TestOS_Lookup(t *testing.T) {
 	}
 }
 
-func TestOS_Set(t *testing.T) {
+func TestOSAssert(t *testing.T) {
+	var dt = []struct {
+		in, out interface{}
+		kind    int
+		ok      bool
+	}{
+		{in: 3.14},
+		{in: "rv"},
+		{in: "rv", out: "rv", kind: client.StringVal, ok: true},
+		{in: "42", out: 42, kind: client.IntVal, ok: true},
+		{in: "3.14", out: 3.14, kind: client.FloatVal, ok: true},
+		{in: "true", out: true, kind: client.BoolVal, ok: true},
+	}
+	for i, tt := range dt {
+		out, ok := osClient.Assert(tt.in, tt.kind)
+		if ok != tt.ok {
+			t.Fatalf("%d. assert mismatch: got=%q exp=%q", i, ok, tt.ok)
+		}
+		if out != tt.out {
+			t.Errorf("%d. content mismatch: got=%q exp=%q", i, out, tt.out)
+		}
+	}
+
+}
+
+func TestOSNeedAssert(t *testing.T) {
+	if !osClient.NeedAssert() {
+		t.Fatal("expected assertion")
+	}
+}
+
+func TestOSSet(t *testing.T) {
 	k := "EVE_CLIENT_OS_TEST"
 	if err := osClient.Set(k, 1); err != client.ErrKind {
 		t.Fatalf("unexpected error: exp=%q got=%q", client.ErrKind, err)

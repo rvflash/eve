@@ -97,6 +97,11 @@ func (r *RPC) Lookup(key string) (interface{}, bool) {
 	return value, err == nil
 }
 
+// NeedAssert implements the Getter interface.
+func (r *RPC) NeedAssert() bool {
+	return false
+}
+
 // Raw returns the value behind the key or an error if it not exists
 func (r *RPC) Raw(key string) (interface{}, error) {
 	var item cache.Item

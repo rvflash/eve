@@ -65,6 +65,11 @@ func (c *Cache) Lookup(key string) (interface{}, bool) {
 	return c.lookup(key)
 }
 
+// NeedAssert implements the Getter interface.
+func (c *Cache) NeedAssert() bool {
+	return false
+}
+
 // Sets puts the value in cache with an expiration date
 // fixed by the cache duration.
 func (c *Cache) Set(key string, value interface{}) error {

@@ -61,15 +61,13 @@ func (c *rpc) Call(service string, args, reply interface{}) error {
 
 var c = client.NewRPC(&rpc{})
 
-// TestOpenRPC is a basic test for OpenRPC.
 func TestOpenRPC(t *testing.T) {
 	if _, err := client.OpenRPC(":0007", time.Second); err == nil {
 		t.Fatal("expected error with open RPC")
 	}
 }
 
-// TestRPC_Get tests all getter.
-func TestRPC_Get(t *testing.T) {
+func TestRPCGet(t *testing.T) {
 	var dt = []struct {
 		in     string
 		out    interface{}
@@ -102,8 +100,7 @@ func TestRPC_Get(t *testing.T) {
 	}
 }
 
-// TestRPC_Get tests the delete method.
-func TestRPC_Delete(t *testing.T) {
+func TestRPCDelete(t *testing.T) {
 	var dt = []struct {
 		in  string
 		err error
@@ -119,15 +116,13 @@ func TestRPC_Delete(t *testing.T) {
 	}
 }
 
-// TestRPC_Clear tests the clear method.
-func TestRPC_Clear(t *testing.T) {
+func TestRPCClear(t *testing.T) {
 	if err := c.Clear(); err != nil {
 		t.Fatalf("unexpected error: got=%q", err)
 	}
 }
 
-// TestRPC_Set tests the setter.
-func TestRPC_Set(t *testing.T) {
+func TestRPCSet(t *testing.T) {
 	var dt = []struct {
 		key   string
 		value interface{}
@@ -144,15 +139,13 @@ func TestRPC_Set(t *testing.T) {
 	}
 }
 
-// TestRPC_Stats tests the stats method.
-func TestRPC_Stats(t *testing.T) {
+func TestRPCStats(t *testing.T) {
 	if _, err := c.Stats(); err != nil {
 		t.Fatalf("unexpected error: got=%q", err)
 	}
 }
 
-// TestRPC_Bulk tests the bulk method.
-func TestRPC_Bulk(t *testing.T) {
+func TestRPCBulk(t *testing.T) {
 	var dt = []struct {
 		batch map[string]interface{}
 		err   error
@@ -165,5 +158,11 @@ func TestRPC_Bulk(t *testing.T) {
 		if err := c.Bulk(tt.batch); !reflect.DeepEqual(err, tt.err) {
 			t.Fatalf("%d. error mismatch: got=%q exp=%q", i, err, tt.err)
 		}
+	}
+}
+
+func TestRPCNeedAssert(t *testing.T) {
+	if c.NeedAssert() {
+		t.Fatal("expected no assert")
 	}
 }

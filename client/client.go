@@ -6,16 +6,30 @@ package client
 
 import "errors"
 
+// List of value's kind.
+const (
+	BoolVal int = 1 << iota
+	FloatVal
+	IntVal
+	StringVal
+)
+
 // Caller must be implemented by any client to call a service,
 // waits for it to complete, and returns its error status.
 type Caller interface {
 	Call(service string, args, reply interface{}) error
 }
 
+// Asserter must be implemented by any client
+// that needs to assert it values.
+type Asserter interface {
+	Assert(value interface{}, kind int) (interface{}, bool)
+}
+
 // Reader must be implemented by any client to get data.
 type Getter interface {
-	Get(key string) interface{}
 	Lookup(key string) (interface{}, bool)
+	NeedAssert() bool
 }
 
 // Writer must be implemented by any client to set data.
