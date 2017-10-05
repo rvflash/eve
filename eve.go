@@ -26,12 +26,9 @@ var (
 	OS    = &client.OS{}
 )
 
-// DefaultHandler defines the sort order to use to fetch data source.
-// By default, eve tries to get the variable's value:
-// > In its own memory cache.
-// > In the list of available environment variables.
-// The Eve client only sets variables in its own cache.
-var DefaultHandler = Handler{0: Cache, 1: OS}
+// Time duration used to check if at least one RPC cache
+// is available.
+var Tick = time.Minute
 
 // Handler returns the list of data sources in the order
 // in which they are used.
@@ -54,13 +51,16 @@ type Client struct {
 // New returns an instance of a Client.
 // The first parameter is the project's identifier.
 // The second, optional, represents a list of data getter.
+// By default, eve tries to get the variable's value:
+// > In its own memory cache.
+// > In the list of available environment variables.
+// > in the other date getter like RPC cache.
+// The Eve client only sets variables in its own cache.
 func New(project string, servers ...client.Getter) *Client {
-	// Sets the tick to check the freshness of the data.
-	tick := int(client.DefaultCacheDuration) / 2
 	c := &Client{
 		project: project,
-		Handler: DefaultHandler,
-		alive:   time.NewTicker(time.Duration(tick)),
+		Handler: Handler{0: Cache, 1: OS},
+		alive:   time.NewTicker(Tick),
 	}
 	// Checks if at least one server is alive.
 	go func() {
@@ -135,14 +135,25 @@ func (c *Client) UseHandler(h Handler) *Client {
 
 // Lookup retrieves the value of the environment variable named by the key.
 // If it not exists, the second boolean will be false.
-func (c *Client) Lookup(key string) (v interface{}, ok bool) {
+func (c *Client) Lookup(key string) (interface{}, bool) {
+	return c.assert(key, client.StringVal)
+}
+
+func (c *Client) assert(key string, kind int) (v interface{}, ok bool) {
 	key = c.deployKey(key)
 	for _, h := range c.Handler {
 		if v, ok = h.Lookup(key); ok {
+			if h.NeedAssert() {
+				v, ok = h.(client.Asserter).Assert(v, kind)
+			}
 			return
 		}
 	}
 	return
+}
+
+func (c *Client) deployKey(key string) string {
+	return deploy.Key(c.project, c.firstEnv, c.secondEnv, key)
 }
 
 // todo get values on each element of a struct.
@@ -151,7 +162,7 @@ func (c *Client) Lookup(key string) (v interface{}, ok bool) {
 
 // Bool uses the key to get the variable's value behind as a boolean.
 func (c *Client) Bool(key string) (bool, error) {
-	d, ok := c.Lookup(key)
+	d, ok := c.assert(key, client.BoolVal)
 	if !ok {
 		return false, ErrNotFound
 	}
@@ -164,7 +175,7 @@ func (c *Client) Bool(key string) (bool, error) {
 
 // MustBool is like Bool but panics if the variable cannot be retrieved.
 func (c *Client) MustBool(key string) bool {
-	d, ok := c.Lookup(key)
+	d, ok := c.assert(key, client.BoolVal)
 	if !ok {
 		c.fatal("Bool", key, ErrNotFound)
 	}
@@ -173,7 +184,7 @@ func (c *Client) MustBool(key string) bool {
 
 // Int uses the key to get the variable's value behind as an int.
 func (c *Client) Int(key string) (int, error) {
-	d, ok := c.Lookup(key)
+	d, ok := c.assert(key, client.IntVal)
 	if !ok {
 		return 0, ErrNotFound
 	}
@@ -186,38 +197,16 @@ func (c *Client) Int(key string) (int, error) {
 
 // MustInt is like Int but panics if the variable cannot be retrieved.
 func (c *Client) MustInt(key string) int {
-	d, ok := c.Lookup(key)
+	d, ok := c.assert(key, client.IntVal)
 	if !ok {
 		c.fatal("Int", key, ErrNotFound)
 	}
 	return d.(int)
 }
 
-// Float32 uses the key to get the variable's value behind as a float32.
-func (c *Client) Float32(key string) (float32, error) {
-	d, ok := c.Lookup(key)
-	if !ok {
-		return 0, ErrNotFound
-	}
-	f, ok := d.(float32)
-	if !ok {
-		return 0, ErrInvalid
-	}
-	return f, nil
-}
-
-// MustFloat32 is like Float32 but panics if the variable cannot be retrieved.
-func (c *Client) MustFloat32(key string) float32 {
-	d, ok := c.Lookup(key)
-	if !ok {
-		c.fatal("Float32", key, ErrNotFound)
-	}
-	return d.(float32)
-}
-
 // Float64 uses the key to get the variable's value behind as a float64.
 func (c *Client) Float64(key string) (float64, error) {
-	d, ok := c.Lookup(key)
+	d, ok := c.assert(key, client.FloatVal)
 	if !ok {
 		return 0, ErrNotFound
 	}
@@ -230,7 +219,7 @@ func (c *Client) Float64(key string) (float64, error) {
 
 // MustFloat64 is like Float64 but panics if the variable cannot be retrieved.
 func (c *Client) MustFloat64(key string) float64 {
-	d, ok := c.Lookup(key)
+	d, ok := c.assert(key, client.FloatVal)
 	if !ok {
 		c.fatal("Float64", key, ErrNotFound)
 	}
@@ -239,7 +228,7 @@ func (c *Client) MustFloat64(key string) float64 {
 
 // String uses the key to get the variable's value behind as a string.
 func (c *Client) String(key string) (string, error) {
-	d, ok := c.Lookup(key)
+	d, ok := c.assert(key, client.StringVal)
 	if !ok {
 		return "", ErrNotFound
 	}
@@ -252,7 +241,7 @@ func (c *Client) String(key string) (string, error) {
 
 // MustString is like String but panics if the variable cannot be retrieved.
 func (c *Client) MustString(key string) string {
-	d, ok := c.Lookup(key)
+	d, ok := c.assert(key, client.StringVal)
 	if !ok {
 		c.fatal("String", key, ErrNotFound)
 	}
@@ -268,10 +257,6 @@ func (c *Client) fatal(method, key string, err error) {
 	}
 	key = c.deployKey(key)
 	panic(`eve: ` + method + `(` + quote(key) + `): ` + err.Error())
-}
-
-func (c *Client) deployKey(key string) string {
-	return deploy.Key(c.project, c.firstEnv, c.secondEnv, key)
 }
 
 // Caches try to connect each net addr and returns them.
