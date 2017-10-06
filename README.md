@@ -137,6 +137,12 @@ if data, ok := vars.Lookup("value"); ok {
 
 ## More features
 
+<<<<<<< HEAD
 * You can use your own client to supply the environment variables by implementing the client.Getter interface.
 * More client interfaces can be used: one to check the client's availability to disable the internal cache recycle.
 * Another interface named client.Assert can be used to realize assertion on data of your client. 
+=======
+# You can use your own client to supply the environment variables by implementing the client.Getter interface.
+# More client interfaces can be used: one to check the client's availability to disable the internal cache recycle.
+# Another interface named client.Assert can be used to realize assertion on data of your client. 
+>>>>>>> b2730e2389363b0149bbb847d3f69472a7f60402
