@@ -32,17 +32,17 @@ type Checker interface {
 	Available() bool
 }
 
-// Reader must be implemented by any client to get data.
+// Getter must be implemented by any client to get data.
 type Getter interface {
 	Lookup(key string) (interface{}, bool)
 }
 
-// Writer must be implemented by any client to set data.
+// Setter must be implemented by any client to set data.
 type Setter interface {
 	Set(key string, value interface{}) error
 }
 
-// ReadWriter must be implemented by any client to get and set data.
+// GetSetter must be implemented by any client to get and set data.
 type GetSetter interface {
 	Getter
 	Setter

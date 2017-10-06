@@ -20,7 +20,7 @@ type projectTmplVars struct {
 	Kinds         []db.Kind
 }
 
-// ProjectsHandler display all information about a project.
+// ProjectHandler displays all the information about a project.
 func (s *Server) ProjectHandler(w http.ResponseWriter, r *http.Request) {
 	// Retrieves data to display.
 	vars := mux.Vars(r)

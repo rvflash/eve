@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// CacheDefaultDuration is the default duration to keep data in cache.
+// DefaultCacheDuration is the default duration to keep data in cache.
 var DefaultCacheDuration = 15 * time.Minute
 
 // Cache represents the service to access data as a memory cache.
@@ -65,7 +65,7 @@ func (c *Cache) Lookup(key string) (interface{}, bool) {
 	return c.lookup(key)
 }
 
-// Sets puts the value in cache with an expiration date
+// Set puts the value in cache with an expiration date
 // fixed by the cache duration.
 func (c *Cache) Set(key string, value interface{}) error {
 	c.mu.Lock()
@@ -79,12 +79,12 @@ func (c *Cache) Set(key string, value interface{}) error {
 	return nil
 }
 
-// WithExpire returns true if the data expiration is enabled.
+// WithExpiration returns true if the data expiration is enabled.
 func (c *Cache) WithExpiration() bool {
 	return c.withoutExpire
 }
 
-// WithoutExpire deactivates the item's expiration.
+// NoExpiration deactivates the item's expiration.
 func (c *Cache) NoExpiration() {
 	c.withoutExpire = true
 }

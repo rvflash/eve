@@ -68,7 +68,7 @@ func (k Kind) Int() int {
 	return int(k)
 }
 
-// ParseValue convert the string to expected value.
+// Parse converts the string to expected value.
 func (k Kind) Parse(s string) (interface{}, error) {
 	switch k {
 	case Int:
@@ -269,11 +269,14 @@ const (
 	VarIDTie    = "."
 )
 
+// VarID is the internal name of the variable for the combination of
+// the environments values.
 type VarID struct {
 	EnvValue1,
 	EnvValue2 string
 }
 
+// NewVarID returns a VarID by parsing its string representation.
 func NewVarID(s string) *VarID {
 	v := &VarID{}
 	if !strings.HasPrefix(s, VarIDPrefix) {
@@ -289,6 +292,7 @@ func NewVarID(s string) *VarID {
 	return v
 }
 
+// String returns the string representation of the VarID.
 func (v *VarID) String() string {
 	return VarIDPrefix + v.EnvValue1 + VarIDTie + v.EnvValue2
 }

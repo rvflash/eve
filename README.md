@@ -116,8 +116,7 @@ if err := vars.Envs("qa"); err != nil {
     return
 }
 
-// Now, we suppose to have create 3 variables named:
-// enabled, keyword and value.
+// Now, we suppose to have created 3 variables named: enabled, keyword and value.
 // With this configuration, E.V.E. will try to lookup the following variables:
 // ALPHA_QA_ENABLED, ALPHA_QA_KEYWORD and ALPHA_QA_VALUE.
 if vars.MustBool("enabled") {

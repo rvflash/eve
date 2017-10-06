@@ -12,7 +12,7 @@ import (
 // DefaultEnv is the default Environment used to build the variables's values.
 var DefaultEnv = &Env{Values: []string{""}}
 
-// Environment represents a env of execution.
+// Env represents a env of execution.
 type Env struct {
 	ID           uint64    `json:"id"`
 	Name         string    `json:"name"`

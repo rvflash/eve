@@ -261,7 +261,7 @@ func (m *Data) GetVarInProject(key uint64, project string) (Keyer, error) {
 	return d, err
 }
 
-// AddVarToProject adds a var on a project with its name.
+// AddVarInProject adds a var on a project with its name.
 func (m *Data) AddVarInProject(d *Var, project string) error {
 	dp, err := m.GetProject(project)
 	if err != nil {
@@ -297,7 +297,7 @@ func (m *Data) AddVarInProject(d *Var, project string) error {
 	})
 }
 
-// DeleteVar removes a var.
+// DeleteVarInProject removes a variable in the given project.
 func (m *Data) DeleteVarInProject(d *Var, project string) error {
 	p, err := m.project(project)
 	if err != nil {

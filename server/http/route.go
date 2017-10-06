@@ -75,7 +75,7 @@ func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ProjectsHandler display the error status code 404 page.
+// NotFoundHandler responds with the error status code 404 page.
 func (s *Server) NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }

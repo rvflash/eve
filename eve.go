@@ -26,8 +26,8 @@ var (
 	OS    = &client.OS{}
 )
 
-// Time duration to sleep before checking if at least one RPC cache
-// is available.
+// Tick is the time duration to sleep before checking
+// if at least one RPC cache is available.
 var Tick = time.Minute
 
 // Handler returns the list of data sources in the order
@@ -263,7 +263,7 @@ func (c *Client) fatal(method, key string, err error) {
 	panic(`eve: ` + method + `(` + quote(key) + `): ` + err.Error())
 }
 
-// Caches try to connect each net addr and returns them.
+// Servers tries to connect to each net address and returns them.
 func Servers(addr ...string) (caches []client.Getter, err error) {
 	replicate := len(addr)
 	if replicate == 0 {

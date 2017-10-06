@@ -23,6 +23,7 @@ type varHandler struct {
 	rv   map[string]string
 }
 
+// VarHandler manages all actions to perform on variables.
 func (s *Server) VarHandler(w http.ResponseWriter, r *http.Request) {
 	// Tries to handle the request.
 	var err error

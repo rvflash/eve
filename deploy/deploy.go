@@ -84,7 +84,7 @@ func (s *devNull) Lookup(key string) (interface{}, bool) {
 	return nil, false
 }
 
-// A /dev/null server instance to force the push of all data.
+// ServerLess is a /dev/null server instance to force the pushing of all data.
 var ServerLess = &devNull{}
 
 // Dest must be implemented by any client to deploy data.
