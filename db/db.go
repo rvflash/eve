@@ -152,7 +152,7 @@ func (m *Data) UpsertProject(p *Project) error {
 
 // Envs returns the list of available envs and skip those
 // to ignore as asked.
-func (m *Data) Envs(ignores []uint64) ([]Keyer, error) {
+func (m *Data) Envs(ignores ...uint64) ([]Keyer, error) {
 	all, err := m.all(envs)
 	if err != nil {
 		return nil, err

@@ -52,7 +52,7 @@ func (s *Server) ProjectHandler(w http.ResponseWriter, r *http.Request) {
 	tv := projectTmplVars{}
 	tv.Title = pr.Name
 	tv.Project = pr
-	tv.Envs, _ = s.db.Envs(pr.EnvList)
+	tv.Envs, _ = s.db.Envs(pr.EnvList...)
 	tv.Kinds = db.Kinds
 	tv.Servers, _ = s.db.Nodes()
 
