@@ -5,8 +5,10 @@
 package eve_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rvflash/eve"
@@ -19,19 +21,35 @@ const (
 	strVal   = "rv"
 )
 
+func Example() {
+	vars := eve.New("test", &client{})
+	if err := vars.Envs("qa", "fr"); err != nil {
+		fmt.Println(err)
+		return
+	}
+	if vars.MustBool("bool") {
+		str, _ := vars.String("str")
+		fmt.Print(str)
+	}
+	if d, ok := vars.Lookup("int"); ok {
+		fmt.Printf(": %d", d.(int))
+	}
+	// Output: rv: 42
+}
+
 // cli is the test client to fake RPC client.
 type client struct{}
 
 // Lookup implements the client.Getter interface.
 func (c client) Lookup(key string) (interface{}, bool) {
 	switch key {
-	case "TEST_BOOL":
+	case "TEST_BOOL", "TEST_QA_FR_BOOL":
 		return boolVal, true
-	case "TEST_INT":
+	case "TEST_INT", "TEST_QA_FR_INT":
 		return intVal, true
-	case "TEST_FLOAT":
+	case "TEST_FLOAT", "TEST_QA_FR_FLOAT":
 		return floatVal, true
-	case "TEST_STR":
+	case "TEST_STR", "TEST_QA_FR_STR":
 		return strVal, true
 	}
 	return nil, false
@@ -40,11 +58,6 @@ func (c client) Lookup(key string) (interface{}, bool) {
 // NeedAssert implements the client.Getter interface.
 func (c client) NeedAssert() bool {
 	return false
-}
-
-func ExampleNew() {
-	env := eve.New("test", &client{})
-	env.Lookup("coucou")
 }
 
 func TestClientBool(t *testing.T) {
@@ -104,7 +117,7 @@ func TestClientMustInt(t *testing.T) {
 	if d := c.MustInt("int"); d != intVal {
 		t.Fatalf("content mismatch: got=%v exp=%v", d, intVal)
 	}
-	_ = c.MustBool("rv")
+	_ = c.MustInt("rv")
 }
 
 func TestClientFloat64(t *testing.T) {
@@ -185,6 +198,11 @@ func TestClientUseHandler(t *testing.T) {
 	if l := len(c.Handler); l != 2 {
 		t.Fatalf("len mismatch: got=%v exp=%v", l, 2)
 	}
+}
+
+func TestWorkflow(t *testing.T) {
+	eve.Tick = time.Millisecond
+
 }
 
 func TestServers(t *testing.T) {

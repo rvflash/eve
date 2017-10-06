@@ -26,7 +26,7 @@ var (
 	OS    = &client.OS{}
 )
 
-// Time duration used to check if at least one RPC cache
+// Time duration to sleep before checking if at least one RPC cache
 // is available.
 var Tick = time.Minute
 
@@ -62,16 +62,16 @@ func New(project string, servers ...client.Getter) *Client {
 		Handler: Handler{0: Cache, 1: OS},
 		alive:   time.NewTicker(Tick),
 	}
+	// Adds more servers as data source.
+	for i := 0; i < len(servers); i++ {
+		c.Handler.Add(servers[i])
+	}
 	// Checks if at least one server is alive.
 	go func() {
 		for range c.alive.C {
 			c.fresh()
 		}
 	}()
-	// Adds more servers as data source.
-	for i := 0; i < len(servers); i++ {
-		c.Handler.Add(servers[i])
-	}
 	return c
 }
 
@@ -81,9 +81,8 @@ func New(project string, servers ...client.Getter) *Client {
 func (c *Client) fresh() {
 	var alive bool
 	for _, h := range c.Handler {
-		if c, ok := h.(*client.RPC); ok {
-			if _, err := c.Stats(); err == nil {
-				alive = true
+		if c, ok := h.(client.Checker); ok {
+			if alive = c.Available(); alive {
 				return
 			}
 		}
@@ -98,13 +97,18 @@ func (c *Client) fresh() {
 		return nil
 	}()
 	if cache == nil {
+		// No local cache as handler.
 		return
 	}
 	if alive {
 		if !cache.WithExpiration() {
+			// The local cache has no expiration process
+			// but at least one RPC cache is now alive, we can enable it.
 			cache.UseExpiration()
 		}
 	} else if cache.WithExpiration() {
+		// All RPC caches are down, we temporary disable
+		// the expiration of the local cache.
 		cache.NoExpiration()
 	}
 }
@@ -143,8 +147,8 @@ func (c *Client) assert(key string, kind int) (v interface{}, ok bool) {
 	key = c.deployKey(key)
 	for _, h := range c.Handler {
 		if v, ok = h.Lookup(key); ok {
-			if h.NeedAssert() {
-				v, ok = h.(client.Asserter).Assert(v, kind)
+			if ha, needAssert := h.(client.Asserter); needAssert {
+				v, ok = ha.Assert(v, kind)
 			}
 			return
 		}
