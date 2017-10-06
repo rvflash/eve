@@ -5,13 +5,14 @@
 [![Code Coverage](https://img.shields.io/codecov/c/github/rvflash/eve.svg)](http://codecov.io/github/rvflash/eve?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rvflash/eve)](https://goreportcard.com/report/github.com/rvflash/eve)
 
-E.V.E. is a distributed environment variable management tool based on a friendly user interface named Environment Variables Editor.
 
+E.V.E. is a distributed environment variables management tool based
+on a friendly user interface named Environment Variables Editor. 
 It bases on :
 
-* A HTTP web interface to manage a project, its potential environments and variables.
-* One or more RPC servers used to store the deployed variable's values. 
-* A library to retrieve environment variables in various handlers.
+* A HTTP web interface to manage server nodes, projects, environments and variables.
+* One or more RPC servers used to store the deployed variables values. 
+* A library to retrieve environment variables from various handlers.
 
 
 ## Installation
@@ -28,7 +29,8 @@ $ go get -u github.com/rvflash/eve
 #### Launches the web interface
 
 By default, the editor is available on the net address localhost:8080.
-The database is a BoltDB file named eve.db created in the launch directory. 
+The database is a BoltDB file named eve.db created in the launch directory.
+This interface is based on Bootstrap v4 and jQuery 3.2 to propose a simple interface.
 
 ```bash
 cd $GOPATH/src/github.com/rvflash/eve/server/http/
@@ -133,9 +135,8 @@ if data, ok := vars.Lookup("value"); ok {
 ```
 
 
-## Features
+## More features
 
-    	
-    	 
-
-
+* You can use your own client to supply the environment variables by implementing the client.Getter interface.
+* More client interfaces can be used: one to check the client's availability to disable the internal cache recycle.
+* Another interface named client.Assert can be used to realize assertion on data of your client. 
