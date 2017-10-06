@@ -112,10 +112,3 @@ func TestCacheWorkflow(t *testing.T) {
 		t.Fatal("expected key not found")
 	}
 }
-
-func TestCacheNeedAssert(t *testing.T) {
-	c := client.NewCache(time.Millisecond)
-	if c.NeedAssert() {
-		t.Fatal("expected no assert")
-	}
-}

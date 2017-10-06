@@ -33,6 +33,12 @@ func OpenRPC(dsn string, timeout time.Duration) (*RPC, error) {
 	return NewRPC(rpc.NewClient(c)), nil
 }
 
+// Available implements the Checker interface.
+func (r *RPC) Available() bool {
+	_, err := r.Stats()
+	return err == nil
+}
+
 // Bulk applies the item modifications on the cache.
 // It acknowledges the boolean if it succeeds.
 // An error occurs if the call fails.
@@ -95,11 +101,6 @@ func (r *RPC) Get(key string) interface{} {
 func (r *RPC) Lookup(key string) (interface{}, bool) {
 	value, err := r.Raw(key)
 	return value, err == nil
-}
-
-// NeedAssert implements the Getter interface.
-func (r *RPC) NeedAssert() bool {
-	return false
 }
 
 // Raw returns the value behind the key or an error if it not exists

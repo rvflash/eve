@@ -65,12 +65,6 @@ func TestOSAssert(t *testing.T) {
 
 }
 
-func TestOSNeedAssert(t *testing.T) {
-	if !osClient.NeedAssert() {
-		t.Fatal("expected assertion")
-	}
-}
-
 func TestOSSet(t *testing.T) {
 	k := "EVE_CLIENT_OS_TEST"
 	if err := osClient.Set(k, 1); err != client.ErrKind {

@@ -145,6 +145,12 @@ func TestRPCStats(t *testing.T) {
 	}
 }
 
+func TestRPCAvailable(t *testing.T) {
+	if ok := c.Available(); !ok {
+		t.Fatal("expected the cache as available")
+	}
+}
+
 func TestRPCBulk(t *testing.T) {
 	var dt = []struct {
 		batch map[string]interface{}
@@ -158,11 +164,5 @@ func TestRPCBulk(t *testing.T) {
 		if err := c.Bulk(tt.batch); !reflect.DeepEqual(err, tt.err) {
 			t.Fatalf("%d. error mismatch: got=%q exp=%q", i, err, tt.err)
 		}
-	}
-}
-
-func TestRPCNeedAssert(t *testing.T) {
-	if c.NeedAssert() {
-		t.Fatal("expected no assert")
 	}
 }

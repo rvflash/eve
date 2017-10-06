@@ -49,11 +49,6 @@ func (o *OS) Lookup(key string) (interface{}, bool) {
 	return os.LookupEnv(key)
 }
 
-// NeedAssert implements the Getter interface.
-func (o *OS) NeedAssert() bool {
-	return true
-}
-
 // Set sets the value of the environment variable named by the key.
 func (o *OS) Set(key string, value interface{}) error {
 	s, ok := value.(string)

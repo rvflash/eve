@@ -14,22 +14,27 @@ const (
 	StringVal
 )
 
+// Asserter must be implemented by any client
+// that needs to assert its values.
+type Asserter interface {
+	Assert(value interface{}, kind int) (interface{}, bool)
+}
+
 // Caller must be implemented by any client to call a service,
 // waits for it to complete, and returns its error status.
 type Caller interface {
 	Call(service string, args, reply interface{}) error
 }
 
-// Asserter must be implemented by any client
-// that needs to assert it values.
-type Asserter interface {
-	Assert(value interface{}, kind int) (interface{}, bool)
+// Checker must be implemented by any client
+// to notify its availability.
+type Checker interface {
+	Available() bool
 }
 
 // Reader must be implemented by any client to get data.
 type Getter interface {
 	Lookup(key string) (interface{}, bool)
-	NeedAssert() bool
 }
 
 // Writer must be implemented by any client to set data.
