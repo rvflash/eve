@@ -88,7 +88,7 @@ Now you can use the E.V.E. library to access to your environment variables.
 You can schedule as you want the client to use. 
 
 By default, the handler is defined to lookup in its local cache, then in the OS environment and
-finally in the cache servers add with the New method. 
+finally in the cache servers added with the New method. 
 
 ```go
 // Import the E.V.E. library.
@@ -138,4 +138,4 @@ if data, ok := vars.Lookup("value"); ok {
 
 * You can use your own client to supply the environment variables by implementing the client.Getter interface.
 * More client interfaces can be used: one to check the client's availability to disable the internal cache recycle.
-* Another interface named client.Assert can be used to realize assertion on data of your client.
+* Another interface named client.Asserter can be used to realize assertion on data of your client.
