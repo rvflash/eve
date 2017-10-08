@@ -6,6 +6,7 @@ package eve
 
 import (
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -35,9 +36,25 @@ var Tick = time.Minute
 type Handler map[int]client.Getter
 
 // Add adds a client to the scheduler.
-func (h Handler) Add(src client.Getter) Handler {
+func (h Handler) AddHandler(src client.Getter) Handler {
 	h[len(h)] = src
 	return h
+}
+
+// Servers tries to connect to each net address and returns them.
+func Servers(addr ...string) (caches []client.Getter, err error) {
+	replicate := len(addr)
+	if replicate == 0 {
+		return nil, ErrDataSource
+	}
+	caches = make([]client.Getter, replicate)
+	for p, dsn := range addr {
+		caches[p], err = client.OpenRPC(dsn, client.DefaultCacheDuration)
+		if err != nil {
+			return
+		}
+	}
+	return
 }
 
 // Client represents the EVE client to handle the data sources.
@@ -45,6 +62,7 @@ type Client struct {
 	project,
 	firstEnv, secondEnv string
 	alive *time.Ticker
+	mu    sync.Mutex
 	Handler
 }
 
@@ -64,15 +82,27 @@ func New(project string, servers ...client.Getter) *Client {
 	}
 	// Adds more servers as data source.
 	for i := 0; i < len(servers); i++ {
-		c.Handler.Add(servers[i])
+		c.Handler.AddHandler(servers[i])
 	}
 	// Checks if at least one server is alive.
 	go func() {
 		for range c.alive.C {
+			c.mu.Lock()
 			c.fresh()
+			c.mu.Unlock()
 		}
 	}()
 	return c
+}
+
+// Returns the local cache if used as handler.
+func (c *Client) cache() *client.Cache {
+	for _, h := range c.Handler {
+		if cache, ok := h.(*client.Cache); ok {
+			return cache
+		}
+	}
+	return nil
 }
 
 // Checks if at least one RPC cache is available.
@@ -87,29 +117,18 @@ func (c *Client) fresh() {
 			}
 		}
 	}
-	// Returns the local cache if used.
-	cache := func() *client.Cache {
-		for _, h := range c.Handler {
-			if cache, ok := h.(*client.Cache); ok {
-				return cache
+	if lc := c.cache(); lc != nil {
+		if alive {
+			if !lc.WithExpiration() {
+				// The local cache has no expiration process
+				// but at least one RPC cache is now alive, we can enable it.
+				lc.UseExpiration()
 			}
+		} else if lc.WithExpiration() {
+			// All RPC lcs are down, we temporary disable
+			// the expiration of the local cache.
+			lc.NoExpiration()
 		}
-		return nil
-	}()
-	if cache == nil {
-		// No local cache as handler.
-		return
-	}
-	if alive {
-		if !cache.WithExpiration() {
-			// The local cache has no expiration process
-			// but at least one RPC cache is now alive, we can enable it.
-			cache.UseExpiration()
-		}
-	} else if cache.WithExpiration() {
-		// All RPC caches are down, we temporary disable
-		// the expiration of the local cache.
-		cache.NoExpiration()
 	}
 }
 
@@ -133,8 +152,19 @@ func (c *Client) Envs(envs ...string) error {
 // UseHandler defines a new handler to use.
 // It returns the updated client.
 func (c *Client) UseHandler(h Handler) *Client {
+	c.mu.Lock()
 	c.Handler = h
+	c.mu.Unlock()
 	return c
+}
+
+// Get retrieves the value of the environment variable named by the key.
+// If it not exists, a nil value is returned.
+func (c *Client) Get(key string) interface{} {
+	if v, ok := c.assert(key, client.StringVal); ok {
+		return v
+	}
+	return nil
 }
 
 // Lookup retrieves the value of the environment variable named by the key.
@@ -143,6 +173,9 @@ func (c *Client) Lookup(key string) (interface{}, bool) {
 	return c.assert(key, client.StringVal)
 }
 
+// Tries to get the value of the variable by it key.
+// Asserts the value if the client needs it.
+// It returns a boolean as second parameter to indicate if the key was found.
 func (c *Client) assert(key string, kind int) (v interface{}, ok bool) {
 	key = c.deployKey(key)
 	for _, h := range c.Handler {
@@ -150,12 +183,23 @@ func (c *Client) assert(key string, kind int) (v interface{}, ok bool) {
 			if ha, needAssert := h.(client.Asserter); needAssert {
 				v, ok = ha.Assert(v, kind)
 			}
+			// If the current handler is the local cache,
+			// no need to save the data.
+			if _, k := h.(*client.Cache); k {
+				return
+			}
+			if lc := c.cache(); lc != nil {
+				// Saves the data in the local cache.
+				_ = lc.Set(key, v)
+			}
 			return
 		}
 	}
 	return
 }
 
+// Returns a deploy key by building it with all its pieces,
+// the project name, environments values and variable name.
 func (c *Client) deployKey(key string) string {
 	return deploy.Key(c.project, c.firstEnv, c.secondEnv, key)
 }
@@ -252,6 +296,7 @@ func (c *Client) MustString(key string) string {
 	return d.(string)
 }
 
+// Panic!
 func (c *Client) fatal(method, key string, err error) {
 	quote := func(s string) string {
 		if strconv.CanBackquote(s) {
@@ -261,20 +306,4 @@ func (c *Client) fatal(method, key string, err error) {
 	}
 	key = c.deployKey(key)
 	panic(`eve: ` + method + `(` + quote(key) + `): ` + err.Error())
-}
-
-// Servers tries to connect to each net address and returns them.
-func Servers(addr ...string) (caches []client.Getter, err error) {
-	replicate := len(addr)
-	if replicate == 0 {
-		return nil, ErrDataSource
-	}
-	caches = make([]client.Getter, replicate)
-	for p, dsn := range addr {
-		caches[p], err = client.OpenRPC(dsn, client.DefaultCacheDuration)
-		if err != nil {
-			return
-		}
-	}
-	return
 }
