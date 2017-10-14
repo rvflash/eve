@@ -6,18 +6,17 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rvflash/eve)](https://goreportcard.com/report/github.com/rvflash/eve)
 
 
-E.V.E. is a distributed environment variables management tool based
-on a friendly user interface named Environment Variables Editor. 
-It bases on :
+E.V.E. is a environment variables management tool based on
+a friendly user interface named Environment Variables Editor. 
 
 * A HTTP web interface to manage server nodes, projects, environments and variables.
 * One or more RPC servers used to store the deployed variables values. 
-* A library to retrieve environment variables from various handlers.
+* A library to retrieve environment variables from various handlers and schedule the get order.
 
 
 ## Installation
 
-`eve` requires Go 1.8 or later.
+`eve` requires Go 1.5 or later. (os.LookupEnv is required)
 
 ```bash
 $ go get -u github.com/rvflash/eve

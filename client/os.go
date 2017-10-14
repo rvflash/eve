@@ -14,13 +14,13 @@ type OS struct{}
 
 // Assert tries to cast the value with the given data kind.
 // If success, it returns the data typed and true as ok value.
-func (o *OS) Assert(value interface{}, kind int) (interface{}, bool) {
+func (o *OS) Assert(value interface{}, typ Kind) (interface{}, bool) {
 	// We expects to manipulate string values.
 	s, ok := value.(string)
 	if !ok {
 		return nil, false
 	}
-	switch kind {
+	switch typ {
 	case BoolVal:
 		d, err := strconv.ParseBool(s)
 		return d, err == nil
