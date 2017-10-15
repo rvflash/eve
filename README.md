@@ -6,18 +6,17 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rvflash/eve)](https://goreportcard.com/report/github.com/rvflash/eve)
 
 
-E.V.E. is a distributed environment variables management tool based
-on a friendly user interface named Environment Variables Editor. 
-It bases on :
+E.V.E. is a environment variables management tool based on
+a friendly user interface named Environment Variables Editor. 
 
 * A HTTP web interface to manage server nodes, projects, environments and variables.
 * One or more RPC servers used to store the deployed variables values. 
-* A library to retrieve environment variables from various handlers.
+* A library to retrieve environment variables from various handlers and schedule the get order.
 
 
 ## Installation
 
-`eve` requires Go 1.8 or later.
+`eve` requires Go 1.5 or later. (os.LookupEnv is required)
 
 ```bash
 $ go get -u github.com/rvflash/eve
@@ -90,6 +89,9 @@ You can schedule as you want the client to use.
 By default, the handler is defined to lookup in its local cache, then in the OS environment and
 finally in the cache servers added with the New method. 
 
+
+#### Uses the data getters
+
 ```go
 // Import the E.V.E. library.
 import "github.com/rvflash/eve"
@@ -132,6 +134,45 @@ if data, ok := vars.Lookup("value"); ok {
 }
 // Output: rv: 42
 ```
+
+
+##### Processes the struct's fields.
+
+E.V.E. supports the use of struct tags to specify alternate name and required environment variables.
+
+`eve` can be used to specify an alternate name and `required` with `true` as value, marks as mandatory the field.
+
+E.V.E has automatic support for CamelCased structure fields.
+In the following example, in the continuity of the previous sample, it searches for the variables named ALPHA_QA_OTHER_NAME and ALPHA_QA_REQUIRED_VAR.
+If the last variable can not be found, as the field is tag as mandatory, the `Process` will return in error.
+
+```go
+// MyCnf is sample struct to feed.
+type MyCnf struct {
+    AliasVar    string  `eve:"OTHER_NAME"`
+    RequiredVar int     `required:"true"`
+}
+
+// ...
+
+var conf MyCnf
+if err := vars.Process(&conf); err != nil {
+    fmt.Println(err)
+    return
+}
+```
+
+
+##### Supported structure field types
+
+* string
+* int, int8, int16, int32, int64
+* uint, uint8, uint16, uint32, uint64
+* bool
+* float32, float64
+* time.Duration
+
+Soon, E.V.E. will manage time.Time, slices and maps of any supported type. 
 
 
 ## More features

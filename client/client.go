@@ -6,9 +6,12 @@ package client
 
 import "errors"
 
+// King is the data type.
+type Kind int
+
 // List of value's kind.
 const (
-	BoolVal int = 1 << iota
+	BoolVal Kind = 1 << iota
 	FloatVal
 	IntVal
 	StringVal
@@ -17,7 +20,7 @@ const (
 // Asserter must be implemented by any client
 // that needs to assert its values.
 type Asserter interface {
-	Assert(value interface{}, kind int) (interface{}, bool)
+	Assert(value interface{}, typ Kind) (interface{}, bool)
 }
 
 // Caller must be implemented by any client to call a service,
