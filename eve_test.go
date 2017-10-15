@@ -21,7 +21,18 @@ const (
 	intVal   = 42
 	floatVal = 3.14
 	strVal   = "rv"
+
+	hostVal = "http://sh01.prod"
+	portVal = 8080
+	toVal   = "300ms"
 )
+
+type exFields struct {
+	Addr    string `eve:"host" required:"true"`
+	Port    int
+	Timeout time.Duration `eve:"to"`
+	Retry   bool
+}
 
 func Example() {
 	vars := eve.New("test", server)
@@ -37,6 +48,24 @@ func Example() {
 		fmt.Printf(": %d", d.(int))
 	}
 	// Output: rv: 42
+}
+
+func ExampleClientProcess() {
+	vars := eve.New("test", server)
+	if err := vars.Envs("qa", "fr"); err != nil {
+		fmt.Println(err)
+		return
+	}
+	var mycnf exFields
+	if err := vars.Process(&mycnf); err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf(
+		"%s:%d, to=%.1fs, retry=%v",
+		mycnf.Addr, mycnf.Port, mycnf.Timeout.Seconds(), mycnf.Retry,
+	)
+	// Output: http://sh01.prod:8080, to=0.3s, retry=false
 }
 
 // newClient returns a test client to fake a RPC cache.
@@ -73,6 +102,12 @@ func (c *handler) Lookup(key string) (interface{}, bool) {
 		return floatVal, true
 	case "TEST_STR", "TEST_QA_FR_STR":
 		return strVal, true
+	case "TEST_QA_FR_HOST":
+		return hostVal, true
+	case "TEST_QA_FR_PORT":
+		return portVal, true
+	case "TEST_QA_FR_TO":
+		return toVal, true
 	}
 	return nil, false
 }
@@ -88,6 +123,38 @@ var (
 	server       = newClient(time.Minute)
 	unsafeServer = newClient(100 * time.Millisecond)
 )
+
+func TestClientProcess(t *testing.T) {
+	type koSpec interface{}
+	var (
+		okRv exFields
+		koRv koSpec
+	)
+	c := eve.New("test", server)
+	if err := c.Envs("qa", "fr"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Process(&koRv); err != eve.ErrNoPointer {
+		t.Fatalf("error mismatch: got=%q exp=%q", err, eve.ErrNoPointer)
+	}
+	if err := c.Process(okRv); err != eve.ErrNoPointer {
+		t.Fatalf("error mismatch: got=%q exp=%q", err, eve.ErrNoPointer)
+	}
+	if err := c.Process(&okRv); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestClientMustProcess(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}()
+	var okRv exFields
+	c := eve.New("test", server)
+	c.MustProcess(okRv)
+}
 
 func TestClientBool(t *testing.T) {
 	c := eve.New("test", server)

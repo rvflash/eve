@@ -5,11 +5,13 @@
 package eve
 
 import (
+	"reflect"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rvflash/eve/caseconv"
 	"github.com/rvflash/eve/client"
 	"github.com/rvflash/eve/deploy"
 )
@@ -19,6 +21,7 @@ var (
 	ErrInvalid    = errors.New("invalid data")
 	ErrNotFound   = errors.New("not found")
 	ErrDataSource = errors.New("no available rpc service")
+	ErrNoPointer  = errors.New("mandatory struct pointer")
 )
 
 // Initializes the data sources.
@@ -176,12 +179,12 @@ func (c *Client) Lookup(key string) (interface{}, bool) {
 // Tries to get the value of the variable by it key.
 // Asserts the value if the client needs it.
 // It returns a boolean as second parameter to indicate if the key was found.
-func (c *Client) assert(key string, kind int) (v interface{}, ok bool) {
+func (c *Client) assert(key string, typ client.Kind) (v interface{}, ok bool) {
 	key = c.deployKey(key)
 	for _, h := range c.Handler {
 		if v, ok = h.Lookup(key); ok {
 			if ha, needAssert := h.(client.Asserter); needAssert {
-				v, ok = ha.Assert(v, kind)
+				v, ok = ha.Assert(v, typ)
 			}
 			// If the current handler is the local cache,
 			// no need to save the data.
@@ -204,9 +207,146 @@ func (c *Client) deployKey(key string) string {
 	return deploy.Key(c.project, c.firstEnv, c.secondEnv, key)
 }
 
-// todo get values on each element of a struct.
-// func (c *Client) Process(spec interface{}) error
-// func (c *Client) MustProcess(spec interface{})
+// All information about the specification struct to feed.
+type varInfo struct {
+	Field    reflect.StructField
+	Key      string
+	Value    reflect.Value
+	Required bool
+}
+
+// Reads each field on the struct to get its properties.
+func readStruct(spec interface{}) ([]varInfo, error) {
+	rv := reflect.ValueOf(spec)
+	if rv.Kind() != reflect.Ptr {
+		return nil, ErrNoPointer
+	}
+	rv = rv.Elem()
+	if rv.Kind() != reflect.Struct {
+		return nil, ErrNoPointer
+	}
+	// Retrieves the data key to use.
+	// First by fetching the EVE tag name and then the field name itself.
+	key := func(field reflect.StructField) string {
+		if tag := field.Tag.Get("eve"); tag != "" {
+			return tag
+		}
+		return caseconv.SnakeCase(field.Name)
+	}
+	// Returns true if the field is tagged as mandatory.
+	required := func(field reflect.StructField) bool {
+		b, _ := strconv.ParseBool(field.Tag.Get("required"))
+		return b
+	}
+	kind := rv.Type()
+	info := make([]varInfo, 0, rv.NumField())
+	for i := 0; i < rv.NumField(); i++ {
+		f := rv.Field(i)
+		ft := kind.Field(i)
+		if !f.CanSet() {
+			continue
+		}
+		for f.Kind() == reflect.Ptr {
+			if f.IsNil() {
+				if f.Type().Elem().Kind() != reflect.Struct {
+					// nil pointer to a non-struct
+					break
+				}
+				// create an zero struct
+				f.Set(reflect.New(f.Type().Elem()))
+			}
+			f = f.Elem()
+		}
+		info = append(info, varInfo{
+			Field:    ft,
+			Key:      key(ft),
+			Value:    f,
+			Required: required(ft),
+		})
+	}
+	return info, nil
+}
+
+// Process uses the reflection to assign values on each element.
+// It returns on error if one on its fields can not be retrieved.
+func (c *Client) Process(spec interface{}) error {
+	infos, err := readStruct(spec)
+	if err != nil {
+		return err
+	}
+	// Sets the value of the given field.
+	feed := func(f varInfo) error {
+		typ := f.Value.Type()
+		if typ.Kind() == reflect.Ptr {
+			typ = typ.Elem()
+			if f.Value.IsNil() {
+				f.Value.Set(reflect.New(typ))
+			}
+			f.Value = f.Value.Elem()
+		}
+		switch typ.Kind() {
+		case reflect.String:
+			v, err := c.String(f.Key)
+			if err != nil && f.Required {
+				return err
+			}
+			f.Value.SetString(v)
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			v, err := c.Int(f.Key)
+			if err != nil {
+				// Second chance by expecting time duration in string like 300ms.
+				if f.Value.Kind() == reflect.Int64 && typ.PkgPath() == "time" && typ.Name() == "Duration" {
+					var s string
+					if s, err = c.String(f.Key); err == nil {
+						var d time.Duration
+						d, err = time.ParseDuration(s)
+						v = int(d)
+
+					}
+				}
+			}
+			if err != nil && f.Required {
+				return err
+			}
+			f.Value.SetInt(int64(v))
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			v, err := c.Int(f.Key)
+			if err != nil && f.Required {
+				return err
+			}
+			f.Value.SetUint(uint64(v))
+		case reflect.Bool:
+			v, err := c.Bool(f.Key)
+			if err != nil && f.Required {
+				return err
+			}
+			f.Value.SetBool(v)
+		case reflect.Float32, reflect.Float64:
+			v, err := c.Float64(f.Key)
+			if err != nil && f.Required {
+				return err
+			}
+			f.Value.SetFloat(v)
+		default:
+			//todo Manages time.time from String var.
+		}
+
+		return nil
+	}
+	for _, info := range infos {
+		if err := feed(info); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// MustProcess is like Process but panics if it fails to feed the spec.
+func (c *Client) MustProcess(spec interface{}) {
+	if err := c.Process(spec); err != nil {
+		panic(`eve: ` + err.Error())
+	}
+}
 
 // Bool uses the key to get the variable's value behind as a boolean.
 func (c *Client) Bool(key string) (bool, error) {

@@ -43,7 +43,7 @@ func TestOSLookup(t *testing.T) {
 func TestOSAssert(t *testing.T) {
 	var dt = []struct {
 		in, out interface{}
-		kind    int
+		kind    client.Kind
 		ok      bool
 	}{
 		{in: 3.14},
