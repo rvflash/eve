@@ -31,6 +31,7 @@
                 sv.addClass("is-invalid");
             } else {
                 createTagList(v, asv, $(this).parents("form").find(".tags-env"));
+                $("#saveEnv").removeAttr("disabled");
             }
         });
         // Creates a environment, a variable or a node.

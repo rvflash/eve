@@ -6,7 +6,7 @@
     </nav>
 </header>
 <div class="container-fluid my-3">
-    {{if not .Project.Vars}}
+    {{if or (not .Project.Vars) (not .Project.Envs)}}
     <h1>{{.Project.Name}}</h1>
     <hr class="my-4">
     <p class="lead mb-4">{{.Project.Description}}</p>
