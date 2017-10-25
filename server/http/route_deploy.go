@@ -5,8 +5,10 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -22,6 +24,43 @@ type deployTmplVars struct {
 	Step    int
 	Release *deploy.Release
 	Err     error
+}
+
+// CacheHandler prints a JSON string with all vars to expose.
+func (s *Server) CacheHandler(w http.ResponseWriter, r *http.Request) {
+	// Parses the dedicated directory to retrieve all projects vars.
+	fs, err := ioutil.ReadDir(varsPath)
+	if err != nil {
+		s.jsonHandler(w, err.Error(), http.StatusBadRequest)
+	}
+	// Reads the JSON file to get map of vars as key/value.
+	readJSON := func(filePath string) map[string]interface{} {
+		raw, err := ioutil.ReadFile(filePath)
+		if err != nil {
+			return nil
+		}
+		var d map[string]interface{}
+		if err := json.Unmarshal(raw, &d); err != nil {
+			return nil
+		}
+		return d
+	}
+	var d map[string]interface{}
+	for _, f := range fs {
+		for k, v := range readJSON(f.Name()) {
+			d[k] = v
+		}
+	}
+	// Prints in one JSON string all of them.
+	if len(d) == 0 {
+		s.jsonAppHandler(w, []byte("{}"))
+		return
+	}
+	var raw []byte
+	if raw, err = json.Marshal(d); err != nil {
+		s.jsonHandler(w, err.Error(), http.StatusBadRequest)
+	}
+	s.jsonAppHandler(w, raw)
 }
 
 // NodeHandler deletes a server node.

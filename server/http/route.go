@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	varsPath    = "./static/vars"
 	tmplPath    = "./html/template"
 	tmplFuncMap = template.FuncMap{
 		// deployment
