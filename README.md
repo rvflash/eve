@@ -54,9 +54,12 @@ Usage of ./http:
 
 By default, the RPC server is available on the port 9090.
 
+E.V.E. exposes all environment variables behind /vars.
+Thereby, to deploy a new instance of cache with all managed variables loaded on starting, we can use the `from` option to specify this URL.
+
 ```bash
 cd $GOPATH/src/github.com/rvflash/eve/server/tcp/
-go build && ./tcp
+go build && ./tcp -from "http://localhost:8080/vars"
 ```
 
 You can change it with :
@@ -64,10 +67,12 @@ You can change it with :
 ```bash
 ./tcp --help
 Usage of ./tcp:
+  -from string
+    	URL to fetch to get JSON data to use as default values
   -host string
     	host addr to listen on
   -port int
-    	service port (default 9090) 
+    	service port (default 9090)
 ```
 
 Now, you can open your favorite browser and go to http://localhost:8080 to create your first project.

@@ -1,3 +1,4 @@
 *.db
 server/http/http
+server/http/static/vars/*.json
 server/tcp/tcp

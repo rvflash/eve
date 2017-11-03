@@ -5,7 +5,10 @@
 package rpc
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -20,6 +23,10 @@ const DefaultTimeout = 100 * time.Millisecond
 // ErrNotFound is triggered when the data is not found
 // in the remote cache.
 var ErrNotFound = errors.New("not found")
+
+// ErrUnExpected is triggered when the given data no matches
+// the expected len or data type.
+var ErrUnexpected = errors.New("unexpected data")
 
 // Cache represents the service to access data as a remote cache.
 type Cache struct {
@@ -55,6 +62,54 @@ func New() *Cache {
 		mu:    &sync.RWMutex{},
 		up:    time.Now(),
 	}
+}
+
+// Getter represents the mean to do a HTTP get.
+type Getter interface {
+	Get(url string) (*http.Response, error)
+}
+
+// NewFrom returns a new instance of Cache based
+// on data fetches in the given URL.
+// If it fails to get it as JSON, it returns on error.
+// If the source is empty, no error is returned.
+func NewFrom(url string, src ...Getter) (*Cache, error) {
+	var client Getter
+	switch len(src) {
+	case 1:
+		// Uses a custom HTTP client.
+		// Useful for testing or to apply custom settings.
+		client = src[0]
+	case 0:
+		client = http.DefaultClient
+	default:
+		return nil, ErrUnexpected
+	}
+	// Retrieve the CSV data.
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	// Parses it and uses it as default data in the cache.
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
+	}
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	res := make(map[string]interface{})
+	if err := json.Unmarshal(buf.Bytes(), &res); err != nil {
+		return nil, err
+	}
+	// Creates the new Cache instance with these data inside.
+	c := New()
+	for k, v := range res {
+		c.data[k] = v
+		c.stats.Put++
+		c.stats.Items++
+	}
+	return c, nil
 }
 
 // Bulk applies the item's modifications on the cache in one batch.

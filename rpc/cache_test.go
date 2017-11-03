@@ -5,11 +5,70 @@
 package rpc_test
 
 import (
+	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/rvflash/eve/rpc"
 )
+
+var errNoTransport = errors.New("no transport")
+
+type fakeHttpClient struct{}
+
+func (c *fakeHttpClient) Get(url string) (*http.Response, error) {
+	if !strings.HasPrefix(url, "http") {
+		return nil, errNoTransport
+	}
+	// Mocks responses base on the URL.
+	urlHandler := func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/vars":
+			_, _ = io.WriteString(w, `{"ALPHA_BOOL":true,"ALPHA_STR":"2ojE41"}`)
+		case "/oops":
+			_, _ = io.WriteString(w, `{"ALPHA_BOOL"`)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = io.WriteString(w, `{}`)
+		}
+	}
+	req := httptest.NewRequest("GET", url, nil)
+	w := httptest.NewRecorder()
+	urlHandler(w, req)
+	return w.Result(), nil
+}
+
+func TestNewFrom(t *testing.T) {
+	var ct = &fakeHttpClient{}
+	var dt = []struct {
+		from   string
+		client rpc.Getter
+		stats  rpc.Requests
+		onErr  bool
+	}{
+		{from: "/", client: ct, onErr: true},
+		{from: "http://localhost:8080/oops", client: ct, onErr: true},
+		{from: "http://localhost:8080", client: ct, onErr: true},
+		{from: "http://localhost:8080/vars", client: ct, stats: rpc.Requests{Put: 2}},
+	}
+	for i, tt := range dt {
+		c, err := rpc.NewFrom(tt.from, tt.client)
+		if tt.onErr != (err != nil) {
+			t.Fatalf("%d. error mismatch: error expexted=%q got=%q", i, tt.onErr, err)
+		}
+		if err == nil {
+			req := &rpc.Metrics{}
+			_ = c.Stats(true, req)
+			if !reflect.DeepEqual(req.Requests, tt.stats) {
+				t.Errorf("%d. stats mismatch: exp=%v got=%v", i, tt.stats, req.Requests)
+			}
+		}
+	}
+}
 
 func TestWorkflow(t *testing.T) {
 	// Creates the workspace.

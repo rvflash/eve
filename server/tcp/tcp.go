@@ -18,8 +18,9 @@ func init() {
 func main() {
 	host := flag.String("host", "", "host addr to listen on")
 	port := flag.Int("port", rpc.DefaultPort, "service port")
+	from := flag.String("from", "", "URL to fetch to get JSON data to use as default values")
 	flag.Parse()
 
 	// Try to connect to the local database.
-	NewServer(*host, *port).Serve()
+	NewServer(*host, *port).Serve(*from)
 }
