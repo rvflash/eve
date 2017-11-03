@@ -7,9 +7,12 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -19,13 +22,6 @@ import (
 	"github.com/rvflash/eve/deploy"
 )
 
-type deployTmplVars struct {
-	projectTmplVars
-	Step    int
-	Release *deploy.Release
-	Err     error
-}
-
 // CacheHandler prints a JSON string with all vars to expose.
 func (s *Server) CacheHandler(w http.ResponseWriter, r *http.Request) {
 	// Parses the dedicated directory to retrieve all projects vars.
@@ -33,34 +29,48 @@ func (s *Server) CacheHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.jsonHandler(w, err.Error(), http.StatusBadRequest)
 	}
-	// Reads the JSON file to get map of vars as key/value.
-	readJSON := func(filePath string) map[string]interface{} {
-		raw, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			return nil
-		}
-		var d map[string]interface{}
-		if err := json.Unmarshal(raw, &d); err != nil {
-			return nil
-		}
-		return d
-	}
+	all := make(map[string]interface{})
 	var d map[string]interface{}
 	for _, f := range fs {
-		for k, v := range readJSON(f.Name()) {
-			d[k] = v
+		if err = readJSON(filepath.Join(varsPath, f.Name()), &d); err != nil {
+			fmt.Println(err)
+			continue
+		}
+		for k, v := range d {
+			all[k] = v
 		}
 	}
 	// Prints in one JSON string all of them.
-	if len(d) == 0 {
+	if len(all) == 0 {
 		s.jsonAppHandler(w, []byte("{}"))
 		return
 	}
 	var raw []byte
-	if raw, err = json.Marshal(d); err != nil {
+	if raw, err = json.Marshal(all); err != nil {
 		s.jsonHandler(w, err.Error(), http.StatusBadRequest)
 	}
 	s.jsonAppHandler(w, raw)
+}
+
+func readJSON(filePath string, to *map[string]interface{}) error {
+	raw, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		if !os.IsExist(err) {
+			return nil
+		}
+		return err
+	}
+	if err := json.Unmarshal(raw, to); err != nil {
+		return err
+	}
+	return nil
+}
+
+type deployTmplVars struct {
+	projectTmplVars
+	Step    int
+	Release *deploy.Release
+	Err     error
 }
 
 // NodeHandler deletes a server node.
@@ -197,7 +207,32 @@ func (s *Server) deploy(p db.Keyer, w []db.Keyer, r *http.Request) (
 		return
 	}
 	step = 2
-	err = out.Push(r.Form["vars"]...)
+	if err = out.Push(r.Form["vars"]...); err != nil {
+		return
+	}
+	// Saves the pushed's vars in a dedicated local JSON file.
+	var f = filepath.Join(varsPath, project.ID) + ".json"
+	var d map[string]interface{}
+	if err = readJSON(f, &d); err != nil {
+		return
+	}
+	if len(d) == 0 {
+		d = make(map[string]interface{})
+	}
+	for k, v := range out.Log() {
+		if v[1] == nil {
+			if _, ok := d[k]; ok {
+				delete(d, k)
+			}
+			continue
+		}
+		d[k] = v[1]
+	}
+	var raw []byte
+	if raw, err = json.Marshal(d); err != nil {
+		return
+	}
+	err = ioutil.WriteFile(f, raw, 0666)
 
 	return
 }
