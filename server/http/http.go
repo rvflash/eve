@@ -13,7 +13,7 @@ import (
 func main() {
 	host := flag.String("host", "", "host addr to listen on")
 	port := flag.Int("port", 8080, "service port")
-	dsn := flag.String("dsn", "eve.db", "database's filepath")
+	dsn := flag.String("dsn", "eve.db", "database's file path")
 	flag.Parse()
 
 	// Try to connect to the local database.

@@ -55,6 +55,7 @@ func (s *Server) Route() {
 		s.r.HandleFunc("/project/{pid:[a-z-]+}/var/{vid:[0-9]+}", s.VarHandler)
 		s.r.HandleFunc("/project/{pid:[a-z-]+}/var/{vid:[0-9]+}/delete", s.VarHandler)
 		s.r.HandleFunc("/project/{pid:[a-z-]+}/deploy", s.DeployHandler)
+		s.r.HandleFunc("/vars", s.CacheHandler)
 		s.r.HandleFunc("/favicon.ico", s.StaticHandler)
 	}
 }
