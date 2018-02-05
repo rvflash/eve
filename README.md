@@ -17,9 +17,11 @@ a friendly user interface named Environment Variables Editor.
 ## Installation
 
 `eve` requires Go 1.5 or later. (os.LookupEnv is required)
+It uses go dep to manage dependencies.
 
 ```bash
 $ go get -u github.com/rvflash/eve
+$ dep ensure
 ```
 
 
