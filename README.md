@@ -21,6 +21,7 @@ It uses go dep to manage dependencies.
 
 ```bash
 $ go get -u github.com/rvflash/eve
+$ cd $GOPATH/src/github.com/rvflash/eve
 $ dep ensure
 ```
 
