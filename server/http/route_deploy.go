@@ -32,6 +32,10 @@ func (s *Server) CacheHandler(w http.ResponseWriter, r *http.Request) {
 	all := make(map[string]interface{})
 	var d map[string]interface{}
 	for _, f := range fs {
+		if f.Name() == ".empty" {
+			// Ignores the file that keeps the directory in Git.
+			continue
+		}
 		if err = readJSON(filepath.Join(varsPath, f.Name()), &d); err != nil {
 			fmt.Println(err)
 			continue
