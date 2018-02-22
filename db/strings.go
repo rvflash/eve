@@ -9,21 +9,14 @@ import (
 	"strings"
 )
 
+var (
+	alphaNum     = regexp.MustCompile("[^a-zA-Z0-9]+")
+	alphaNumPlus = regexp.MustCompile("[^a-z0-9_-]+")
+)
+
 func check(s string) bool {
 	ok, _ := regexp.MatchString("^[a-zA-Z0-9_-]+$", s)
 	return ok
-}
-
-func checklist(s []string) (ok bool) {
-	if len(s) == 0 {
-		return
-	}
-	for _, v := range s {
-		if ok, _ = regexp.MatchString("^[a-zA-Z0-9]+$", v); !ok {
-			return
-		}
-	}
-	return
 }
 
 // Returns a lower case version of the given string with only a-z, dash and underscore).
@@ -32,15 +25,15 @@ func clean(s string) string {
 	s = strings.Join(strings.Fields(s), " ")
 	s = strings.Replace(strings.TrimSpace(s), " ", "-", -1)
 	// Removes all the chars not allowed.
-	reg, _ := regexp.Compile("[^a-z0-9_-]+")
-	return reg.ReplaceAllString(strings.ToLower(s), "")
+	return alphaNumPlus.ReplaceAllString(strings.ToLower(s), "")
 }
 
 // Removes the duplicates in a slice of string.
-func unique(s []string) []string {
+func uniqueness(s []string) []string {
 	exists := map[string]bool{}
 	r := []string{}
 	for v := range s {
+		s[v] = alphaNum.ReplaceAllString(s[v], "")
 		if !exists[s[v]] {
 			// Record this element as an encountered element.
 			exists[s[v]] = true
