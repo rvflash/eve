@@ -363,11 +363,11 @@ func (c *Client) Bool(key string) (bool, error) {
 
 // MustBool is like Bool but panics if the variable cannot be retrieved.
 func (c *Client) MustBool(key string) bool {
-	d, ok := c.assert(key, client.BoolVal)
-	if !ok {
-		c.fatal("Bool", key, ErrNotFound)
+	d, err := c.Bool(key)
+	if err != nil {
+		c.fatal("Bool", key, err)
 	}
-	return d.(bool)
+	return d
 }
 
 // Int uses the key to get the variable's value behind as an int.
@@ -378,18 +378,25 @@ func (c *Client) Int(key string) (int, error) {
 	}
 	i, ok := d.(int)
 	if !ok {
-		return 0, ErrInvalid
+		// JSON unmarshal stores the numbers as float64.
+		// On restarting, the RPC cache retrieves the data from a JSON.
+		// We needs to manage this behavior.
+		f, ok := d.(float64)
+		if !ok {
+			return 0, ErrInvalid
+		}
+		i = int(f)
 	}
 	return i, nil
 }
 
 // MustInt is like Int but panics if the variable cannot be retrieved.
 func (c *Client) MustInt(key string) int {
-	d, ok := c.assert(key, client.IntVal)
-	if !ok {
-		c.fatal("Int", key, ErrNotFound)
+	d, err := c.Int(key)
+	if err != nil {
+		c.fatal("Int", key, err)
 	}
-	return d.(int)
+	return d
 }
 
 // Float64 uses the key to get the variable's value behind as a float64.
@@ -407,11 +414,11 @@ func (c *Client) Float64(key string) (float64, error) {
 
 // MustFloat64 is like Float64 but panics if the variable cannot be retrieved.
 func (c *Client) MustFloat64(key string) float64 {
-	d, ok := c.assert(key, client.FloatVal)
-	if !ok {
-		c.fatal("Float64", key, ErrNotFound)
+	d, err := c.Float64(key)
+	if err != nil {
+		c.fatal("Float64", key, err)
 	}
-	return d.(float64)
+	return d
 }
 
 // String uses the key to get the variable's value behind as a string.
@@ -429,11 +436,11 @@ func (c *Client) String(key string) (string, error) {
 
 // MustString is like String but panics if the variable cannot be retrieved.
 func (c *Client) MustString(key string) string {
-	d, ok := c.assert(key, client.StringVal)
-	if !ok {
-		c.fatal("String", key, ErrNotFound)
+	d, err := c.String(key)
+	if err != nil {
+		c.fatal("String", key, err)
 	}
-	return d.(string)
+	return d
 }
 
 // Panic!
