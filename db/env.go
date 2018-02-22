@@ -63,8 +63,8 @@ func (s *Env) Valid(insert bool) error {
 	if !check(s.Name) {
 		return ErrInvalid
 	}
-	s.Values = unique(s.Values)
-	if !checklist(s.Values) {
+	s.Values = uniqueness(s.Values)
+	if len(s.Values) == 0 {
 		return ErrMissing
 	}
 	if !insert && s.ID == 0 {
