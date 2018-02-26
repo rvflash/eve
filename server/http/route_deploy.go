@@ -236,7 +236,13 @@ func (s *Server) deploy(p db.Keyer, w []db.Keyer, r *http.Request) (
 	if raw, err = json.Marshal(d); err != nil {
 		return
 	}
-	err = ioutil.WriteFile(f, raw, 0666)
+	if err = ioutil.WriteFile(f, raw, 0666); err != nil {
+		return
+	}
+
+	// Updates the last deployment date of the project.
+	project.LastDeployTs = time.Now()
+	err = s.db.UpsertProject(project)
 
 	return
 }
