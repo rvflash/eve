@@ -16,7 +16,13 @@ services:
   app:
     build: .
     image: eve
-    command: ["/go/src/github.com/rvflash/eve/server/http/http", "-port", "8080"]
+    volumes:
+      - ./testdata:/go/src/github.com/rvflash/eve/testdata
+    command: [
+      "/go/src/github.com/rvflash/eve/server/http/http",
+      "-port", "8080",
+      "-dsn", "/go/src/github.com/rvflash/eve/testdata/beta.db"
+    ]
     ports:
       - 8080:8080
     networks:
