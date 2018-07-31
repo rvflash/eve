@@ -192,9 +192,8 @@ func (c *Client) assert(key string, typ client.Kind) (v interface{}, ok bool) {
 			if ha, needAssert := c.Handler[i].(client.Asserter); needAssert {
 				v, ok = ha.Assert(v, typ)
 			}
-			// If the current handler is the local cache,
-			// no need to save the data.
 			if _, k := c.Handler[i].(*client.Cache); k {
+				// If the current handler is the local cache, no need to save the data.
 				return
 			}
 			if lc := c.cache(); lc != nil {
