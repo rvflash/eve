@@ -1,0 +1,11 @@
+version: '3'
+services:
+  app:
+    build: .
+    command:
+    - /bin/sh
+    - -c
+    - /go/src/github.com/rvflash/eve/server/http/http -port=8080
+      /go/src/github.com/rvflash/eve/server/tcp/tcp -port=9090 -from=http://localhost:8080/vars
+    ports:
+    - 8080:8080
