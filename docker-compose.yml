@@ -9,3 +9,4 @@ services:
       /go/src/github.com/rvflash/eve/server/tcp/tcp -port=9090 -from=http://localhost:8080/vars
     ports:
     - 8080:8080
+    - 9090:9090
