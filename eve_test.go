@@ -50,7 +50,7 @@ func Example() {
 	// Output: rv: 42
 }
 
-func ExampleClientProcess() {
+func ExampleClient_Process() {
 	vars := eve.New("test", server)
 	if err := vars.Envs("qa", "fr"); err != nil {
 		fmt.Println(err)

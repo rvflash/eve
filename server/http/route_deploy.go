@@ -64,10 +64,7 @@ func readJSON(filePath string, to *map[string]interface{}) error {
 		}
 		return err
 	}
-	if err := json.Unmarshal(raw, to); err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(raw, to)
 }
 
 type deployTmplVars struct {
