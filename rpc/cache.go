@@ -97,7 +97,9 @@ func NewFrom(url string, src ...Getter) (*Cache, error) {
 		return nil, errors.New(resp.Status)
 	}
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(resp.Body)
+	if _, err = buf.ReadFrom(resp.Body); err != nil {
+		return nil, err
+	}
 	res := make(map[string]interface{})
 	if err := json.Unmarshal(buf.Bytes(), &res); err != nil {
 		return nil, err

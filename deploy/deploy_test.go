@@ -26,7 +26,7 @@ func TestServerLess(t *testing.T) {
 	}
 	data := map[string]interface{}{"rv": nil}
 	if err := deploy.ServerLess.Bulk(data); err != nil {
-		t.Fatalf("bulk error: got=%q exp=%q", err, nil)
+		t.Fatalf("bulk error: got=%q", err)
 	}
 }
 
@@ -294,7 +294,7 @@ func TestKey(t *testing.T) {
 	}
 	for i, tt := range dt {
 		if out := deploy.Key(tt.in...); out != tt.out {
-			t.Errorf("%d. content mismatch: got=%d exp=%d", i, out, tt.out)
+			t.Errorf("%d. content mismatch: got=%q exp=%q", i, out, tt.out)
 		}
 	}
 }

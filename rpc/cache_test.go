@@ -58,7 +58,7 @@ func TestNewFrom(t *testing.T) {
 	for i, tt := range dt {
 		c, err := rpc.NewFrom(tt.from, tt.client)
 		if tt.onErr != (err != nil) {
-			t.Fatalf("%d. error mismatch: error expexted=%q got=%q", i, tt.onErr, err)
+			t.Fatalf("%d. error mismatch: error expexted=%t got=%q", i, tt.onErr, err)
 		}
 		if err == nil {
 			req := &rpc.Metrics{}

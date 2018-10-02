@@ -68,7 +68,10 @@ func (s *Server) ProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		s.jsonHandler(w, "invalid method", http.StatusBadRequest)
 		return
 	}
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		s.jsonHandler(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Try to create a new project.
 	p := db.NewProject(r.Form.Get("name"), r.Form.Get("desc"))

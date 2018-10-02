@@ -92,7 +92,7 @@ func TestRPCGet(t *testing.T) {
 		}
 		out, exists = c.Lookup(tt.in)
 		if exists != tt.exists {
-			t.Errorf("%d. exists mismatch for %q: got=%q exp=%q", i, tt.in, exists, tt.exists)
+			t.Errorf("%d. exists mismatch for %q: got=%t exp=%t", i, tt.in, exists, tt.exists)
 		}
 		if out != tt.out {
 			t.Errorf("%d. lookup content mismatch for %q: got=%q exp=%q", i, tt.in, out, tt.out)

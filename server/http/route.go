@@ -69,6 +69,7 @@ func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	hv := homeTmplVars{}
 	hv.Projects, hv.Err = s.db.Projects()
 	hv.Servers, _ = s.db.Nodes()
+	hv.Title = "E.V.E."
 
 	// Displays the page.
 	if err = t.Execute(w, hv); err != nil {
@@ -108,5 +109,5 @@ func (s *Server) jsonHandler(w http.ResponseWriter, res string, code int) {
 func (s *Server) jsonAppHandler(w http.ResponseWriter, data []byte) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
-	w.Write(data)
+	_, _ = w.Write(data)
 }

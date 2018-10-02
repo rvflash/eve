@@ -162,7 +162,7 @@ func TestClientBool(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error: got=%v", err)
 	}
-	if d != boolVal {
+	if !d {
 		t.Errorf("content mismatch: got=%v exp=%v", d, boolVal)
 	}
 	if _, err = c.Bool("rv"); !reflect.DeepEqual(err, eve.ErrNotFound) {
@@ -180,8 +180,8 @@ func TestClientMustBool(t *testing.T) {
 		}
 	}()
 	c := eve.New("test", server)
-	if d := c.MustBool("bool"); d != true {
-		t.Fatalf("content mismatch: got=%v exp=%v", d, true)
+	if d := c.MustBool("bool"); !d {
+		t.Fatalf("content mismatch: got=%v exp=%v", d, boolVal)
 	}
 	_ = c.MustBool("rv")
 }

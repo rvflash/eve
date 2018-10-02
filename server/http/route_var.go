@@ -110,7 +110,10 @@ func (h *varHandler) getHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *varHandler) putHandler(w http.ResponseWriter, r *http.Request) {
 	// Try to update the given variable.
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		h.s.jsonHandler(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	// Builds the map of new values for the response.
 	v := h.v.(*db.Var)
 	m := make(map[string]string)
@@ -140,7 +143,10 @@ func (s *Server) VarsHandler(w http.ResponseWriter, r *http.Request) {
 		s.jsonHandler(w, "invalid method", http.StatusBadRequest)
 		return
 	}
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		s.jsonHandler(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Try to create one variable.
 	vars := mux.Vars(r)

@@ -245,7 +245,7 @@ func (d *Release) Diff() map[string]*Changes {
 		if _, ok := c[n]; !ok {
 			c[n] = &Changes{Var: n, Log: make(map[string][2]interface{})}
 		}
-		cv, _ := d.dst[k]
+		cv := d.dst[k]
 		c[n].Log[k] = change(cv, v)
 	}
 	return c
@@ -267,7 +267,7 @@ func (d *Release) Log() map[string][2]interface{} {
 		}
 		// In the first position, we have the value before the push,
 		// then, in the second, the value after the push.
-		v, _ := d.dst[k]
+		v := d.dst[k]
 		log[k] = change(v, nv)
 	}
 	if len(log) == 0 {
@@ -389,7 +389,7 @@ func (d *Release) rebase(with []string) {
 		return
 	}
 	// Converts variable names in map of deploy keys.
-	only := make(map[string]struct{}, 0)
+	only := make(map[string]struct{})
 	for _, name := range with {
 		for _, ev1 := range d.env1 {
 			for _, ev2 := range d.env2 {

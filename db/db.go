@@ -490,7 +490,9 @@ func (m *Data) put(tx *bolt.Tx, d Valuable, table []byte, free bool) error {
 			if err != nil {
 				return err
 			}
-			d.SetKey(itob(k))
+			if err = d.SetKey(itob(k)); err != nil {
+				return err
+			}
 		}
 		// Checks if the elements doesn't exist.
 		if len(b.Get(d.Key())) > 0 {

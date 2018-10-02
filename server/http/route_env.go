@@ -92,7 +92,7 @@ func (s *Server) EnvsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseEnv(r *http.Request) *db.Env {
-	r.ParseForm()
+	_ = r.ParseForm()
 
 	// We uses comma to split environment's values.
 	f := func(r rune) bool {
