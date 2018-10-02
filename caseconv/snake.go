@@ -11,6 +11,7 @@ import (
 
 var camelCase = regexp.MustCompile("(^[^A-Z0-9]*|[A-Z0-9]*)([A-Z0-9][^A-Z]+|$)")
 
+// SnakeCase converts a camelcase string to a snake case.
 func SnakeCase(s string) string {
 	var a []string
 	for _, p := range camelCase.FindAllStringSubmatch(s, -1) {

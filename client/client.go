@@ -6,7 +6,7 @@ package client
 
 import "errors"
 
-// King is the data type.
+// Kind is the data type.
 type Kind int
 
 // List of value's kind.
