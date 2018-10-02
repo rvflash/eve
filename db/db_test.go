@@ -11,10 +11,12 @@ import (
 
 const (
 	dbTest = "test.db"
-	doGet  = "get"
-	doAdd  = "add"
-	doUpd  = "upd"
-	doDel  = "del"
+
+	// Actions
+	doGet = "get"
+	doAdd = "add"
+	doUpd = "upd"
+	doDel = "del"
 )
 
 type dbt struct {
