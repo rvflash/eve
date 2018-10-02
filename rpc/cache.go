@@ -24,7 +24,7 @@ const DefaultTimeout = 100 * time.Millisecond
 // in the remote cache.
 var ErrNotFound = errors.New("not found")
 
-// ErrUnExpected is triggered when the given data no matches
+// ErrUnexpected is triggered when the given data no matches
 // the expected len or data type.
 var ErrUnexpected = errors.New("unexpected data")
 

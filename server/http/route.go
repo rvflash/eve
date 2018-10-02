@@ -83,7 +83,7 @@ func (s *Server) NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // OopsHandler responds with an HTTP status code 500.
-func (s *Server) OopsHandler(w http.ResponseWriter, r *http.Request, err error) {
+func (s *Server) OopsHandler(w http.ResponseWriter, _ *http.Request, err error) {
 	s.log.Println(err)
 	http.Error(w, "Oops I did it again", http.StatusInternalServerError)
 }

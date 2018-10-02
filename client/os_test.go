@@ -67,14 +67,17 @@ func TestOSAssert(t *testing.T) {
 
 func TestOSSet(t *testing.T) {
 	k := "EVE_CLIENT_OS_TEST"
-	if err := osClient.Set(k, 1); err != client.ErrKind {
+	err := osClient.Set(k, 1)
+	if err != client.ErrKind {
 		t.Fatalf("unexpected error: exp=%q got=%q", client.ErrKind, err)
 	}
-	if err := osClient.Set(k, "true"); err != nil {
+	if err = osClient.Set(k, "true"); err != nil {
 		t.Fatalf("unexpected error: got=%q", err)
 	} else if out := osClient.Get(k); out != "true" {
 		t.Fatalf("content mismatch: exp=%q got=%q", "true", out)
 	}
 	// Resets
-	os.Setenv(k, "")
+	if err = os.Setenv(k, ""); err != nil {
+		t.Fatalf("unexpected error: got=%q", err)
+	}
 }

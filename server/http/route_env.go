@@ -31,7 +31,7 @@ func (s *Server) EnvHandler(w http.ResponseWriter, r *http.Request) {
 	env := d.(*db.Env)
 	pid, ok := vars["pid"]
 	if !ok {
-		if r.Method == "POST" {
+		if r.Method == http.MethodPost {
 			// Updates this environment.
 			scp := parseEnv(r)
 			env.Name, env.Values = scp.Name, scp.Values
@@ -70,7 +70,7 @@ func (s *Server) EnvHandler(w http.ResponseWriter, r *http.Request) {
 
 // EnvsHandler listens post data to create a environment and go the project page.
 func (s *Server) EnvsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		s.jsonHandler(w, "invalid method", http.StatusBadRequest)
 		return
 	}

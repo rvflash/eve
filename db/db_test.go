@@ -9,7 +9,13 @@ import (
 	"github.com/rvflash/eve/db"
 )
 
-const dbTest = "test.db"
+const (
+	dbTest = "test.db"
+	doGet  = "get"
+	doAdd  = "add"
+	doUpd  = "upd"
+	doDel  = "del"
+)
 
 type dbt struct {
 	r    *db.Data
@@ -239,32 +245,32 @@ func TestDataProject(t *testing.T) {
 	}{
 		// errors
 		{
-			do:  "get",
+			do:  doGet,
 			pn:  "",
 			err: db.ErrNotFound,
 		},
 		{
-			do:  "add",
+			do:  doAdd,
 			p:   db.NewProject(" ", ""),
 			err: db.ErrInvalid,
 		},
 		{
-			do:  "upd",
+			do:  doUpd,
 			p:   db.NewProject("", ""),
 			err: db.ErrInvalid,
 		},
 		// valid
 		{
-			do: "get",
+			do: doGet,
 			pn: "test",
 			p:  db.NewProject("test", ""),
 		},
 		{
-			do: "del",
+			do: doDel,
 			p:  db.NewProject("", ""),
 		},
 		{
-			do: "del",
+			do: doDel,
 			p:  db.NewProject("test", ""),
 		},
 	}
@@ -273,10 +279,10 @@ func TestDataProject(t *testing.T) {
 	for i, tt := range dt {
 		// Creates the project.
 		var err error
-		if tt.do == "add" {
+		if tt.do == doAdd {
 			// Adds it.
 			err = dbt.r.AddProject(tt.p)
-		} else if tt.do == "get" {
+		} else if tt.do == doGet {
 			// Gets it.
 			var (
 				p  db.Keyer
@@ -287,10 +293,10 @@ func TestDataProject(t *testing.T) {
 			if !ok {
 				t.Fatalf("invalid project: %q", tt.pn)
 			}
-		} else if tt.do == "upd" {
+		} else if tt.do == doUpd {
 			// Updates it.
 			err = dbt.r.UpsertProject(tt.p)
-		} else if tt.do == "del" {
+		} else if tt.do == doDel {
 			// Deletes it.
 			err = dbt.r.DeleteProject(tt.p)
 		} else {
@@ -323,108 +329,108 @@ func TestDataVar(t *testing.T) {
 	}{
 		// errors
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  db.NewVar("", 1),
 			to:  "test",
 			err: errors.WithMessage(db.ErrInvalid, "var"),
 		},
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  &db.Var{Name: "r v", Kind: db.Bool},
 			to:  "test",
 			err: errors.WithMessage(db.ErrInvalid, "var"),
 		},
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  &db.Var{Name: "rv", Kind: 0},
 			to:  "test",
 			err: errors.WithMessage(db.ErrMissing, "var"),
 		},
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  &db.Var{Name: "rv", Kind: 10},
 			to:  "test",
 			err: errors.WithMessage(db.ErrMissing, "var"),
 		},
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  db.NewVar(" ", 1),
 			to:  "test",
 			err: errors.WithMessage(db.ErrInvalid, "var"),
 		},
 		{
-			do:  "upd",
+			do:  doUpd,
 			in:  db.NewVar("", 1),
 			to:  "test",
 			err: errors.WithMessage(db.ErrNotFound, "var"),
 		},
 		{
-			do:  "upd",
+			do:  doUpd,
 			in:  &db.Var{ID: 340, Name: "r v", Kind: db.Bool},
 			to:  "test",
 			err: errors.WithMessage(db.ErrNotFound, "var"),
 		},
 		{
-			do:  "upd",
+			do:  doUpd,
 			in:  &db.Var{ID: 340, Name: "rv", Kind: 0},
 			to:  "test",
 			err: errors.WithMessage(db.ErrNotFound, "var"),
 		},
 		{
-			do:  "upd",
+			do:  doUpd,
 			in:  &db.Var{ID: 340, Name: "rv", Kind: 10},
 			to:  "test",
 			err: errors.WithMessage(db.ErrNotFound, "var"),
 		},
 		{
-			do:  "upd",
+			do:  doUpd,
 			in:  &db.Var{Name: "rv", Kind: 1},
 			to:  "test",
 			err: errors.WithMessage(db.ErrNotFound, "var"),
 		},
 		{
-			do:  "upd",
+			do:  doUpd,
 			in:  &db.Var{ID: 340, Name: "rv", Kind: db.Int},
 			to:  "test",
 			err: errors.WithMessage(db.ErrNotFound, "var"),
 		},
 		{
-			do:  "get",
+			do:  doGet,
 			in:  &db.Var{ID: 340, Name: "rv", Kind: db.Int},
 			to:  "test",
 			err: errors.WithMessage(db.ErrNotFound, "var"),
 		},
 		{
-			do:  "get",
+			do:  doGet,
 			in:  &db.Var{ID: 340, Name: "rv", Kind: db.Int},
 			err: errors.WithMessage(db.ErrNotFound, "project"),
 		},
 		{
-			do:  "del",
+			do:  doDel,
 			in:  &db.Var{ID: 666, Name: "rv", Kind: db.Int},
 			to:  "test",
 			err: errors.WithMessage(db.ErrNotFound, "var"),
 		},
 		{
-			do:  "del",
+			do:  doDel,
 			in:  &db.Var{ID: 666, Name: "rv", Kind: db.Int},
 			err: errors.WithMessage(db.ErrNotFound, "project"),
 		},
 		// Valid
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  db.NewVar("rv", db.Bool.Int()),
 			to:  "test",
 			out: &db.Var{Name: "rv", Kind: db.Bool},
 		},
 		{
-			do:  "get",
+			do:  doGet,
 			in:  &db.Var{ID: dbt.v, Name: "test", Kind: db.Bool},
 			to:  "test",
 			out: &db.Var{ID: dbt.v, Name: "test", Kind: db.Bool},
 		},
 		{
-			do:  "del",
+			do:  doDel,
 			in:  &db.Var{ID: dbt.v, Name: "test", Kind: db.Bool},
 			to:  "test",
 			out: &db.Var{ID: dbt.v, Name: "test", Kind: db.Bool},
@@ -435,7 +441,7 @@ func TestDataVar(t *testing.T) {
 	for i, tt := range dt {
 		// Creates the variable.
 		var err error
-		if tt.do == "get" {
+		if tt.do == doGet {
 			// Gets it.
 			var d db.Keyer
 			d, err = dbt.r.GetVarInProject(tt.in.ID, tt.to)
@@ -445,13 +451,13 @@ func TestDataVar(t *testing.T) {
 					t.Fatalf("invalid var: %v", tt.in)
 				}
 			}
-		} else if tt.do == "add" {
+		} else if tt.do == doAdd {
 			// Adds it.
 			err = dbt.r.AddVarInProject(tt.in, tt.to)
-		} else if tt.do == "upd" {
+		} else if tt.do == doUpd {
 			// Updates it.
 			err = dbt.r.UpdateVarInProject(tt.in, tt.to)
-		} else if tt.do == "del" {
+		} else if tt.do == doDel {
 			// Deletes it.
 			err = dbt.r.DeleteVarInProject(tt.in, tt.to)
 		} else {
@@ -474,7 +480,7 @@ func TestDataVar(t *testing.T) {
 			if tt.in.LastUpdateTs.IsZero() {
 				t.Errorf("%d. update date mismatch: exp= >0 got=%q", i, tt.in.LastUpdateTs)
 			}
-			if tt.do == "del" && !tt.in.Deleted() {
+			if tt.do == doDel && !tt.in.Deleted() {
 				t.Errorf("%d. deletion date mismatch: exp= >0 got=%q", i, tt.in.DeletionTs)
 			}
 		}
@@ -554,32 +560,32 @@ func TestDataEnv(t *testing.T) {
 	}{
 		// errors
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  db.NewEnv("", []string{"dev"}),
 			err: db.ErrInvalid,
 		},
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  db.NewEnv("r v", []string{"dev"}),
 			err: db.ErrInvalid,
 		},
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  db.NewEnv("rv", nil),
 			err: db.ErrMissing,
 		},
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  db.NewEnv("rv", nil),
 			err: db.ErrMissing,
 		},
 		{
-			do:  "upd",
+			do:  doUpd,
 			in:  db.NewEnv("rv", []string{"missing", "id"}),
 			err: db.ErrOutOfBounds,
 		},
 		{
-			do:  "get",
+			do:  doGet,
 			in:  &db.Env{ID: 666},
 			err: db.ErrNotFound,
 		},
@@ -602,22 +608,22 @@ func TestDataEnv(t *testing.T) {
 		},
 		// valid
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  db.NewEnv(" Env", []string{"dev", "qa", "prod", "prod"}),
 			out: &db.Env{Name: "Env", Values: []string{"dev", "qa", "prod"}},
 		},
 		{
-			do:  "upd",
+			do:  doUpd,
 			in:  &db.Env{ID: 666, Name: "Environment", Values: []string{"dev"}},
 			out: &db.Env{ID: 666, Name: "Environment", Values: []string{"dev"}},
 		},
 		{
-			do:  "upd",
+			do:  doUpd,
 			in:  &db.Env{ID: 666, Name: " Environment", Values: []string{"dev", "qa", "qa"}},
 			out: &db.Env{ID: 666, Name: "Environment", Values: []string{"dev", "qa"}},
 		},
 		{
-			do:  "get",
+			do:  doGet,
 			in:  &db.Env{ID: 666},
 			out: &db.Env{ID: 666, Name: "Environment", Values: []string{"dev", "qa"}},
 		},
@@ -634,13 +640,13 @@ func TestDataEnv(t *testing.T) {
 			into: "test",
 		},
 		{
-			do:  "get",
+			do:  doGet,
 			in:  &db.Env{ID: dbt.s, Name: "test", Values: []string{"test"}},
 			out: &db.Env{ID: dbt.s, Name: "test", Values: []string{"test"}},
 		},
 		// Errors
 		{
-			do:  "add",
+			do:  doAdd,
 			in:  &db.Env{ID: 666, Name: "Environment", Values: []string{"qa"}},
 			err: db.ErrAlreadyExists,
 		},
@@ -649,7 +655,7 @@ func TestDataEnv(t *testing.T) {
 	for i, tt := range dt {
 		// Creates the environment.
 		var err error
-		if tt.do == "get" {
+		if tt.do == doGet {
 			// Updates it.
 			var d db.Keyer
 			d, err = dbt.r.GetEnv(tt.in.ID)
@@ -659,10 +665,10 @@ func TestDataEnv(t *testing.T) {
 					t.Fatalf("invalid env: %v", tt.in)
 				}
 			}
-		} else if tt.do == "upd" {
+		} else if tt.do == doUpd {
 			// Updates it.
 			err = dbt.r.UpsertEnv(tt.in)
-		} else if tt.do == "add" {
+		} else if tt.do == doAdd {
 			// Adds it.
 			err = dbt.r.AddEnv(tt.in)
 		} else if tt.do == "bind" {

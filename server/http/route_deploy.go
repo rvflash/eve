@@ -92,7 +92,7 @@ func (s *Server) NodeHandler(w http.ResponseWriter, r *http.Request) {
 
 // NodesHandler enables to create a node.
 func (s *Server) NodesHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		s.jsonHandler(w, "invalid method", http.StatusBadRequest)
 		return
 	}

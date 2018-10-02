@@ -18,9 +18,9 @@ import (
 
 var errNoTransport = errors.New("no transport")
 
-type fakeHttpClient struct{}
+type fakeHTTPClient struct{}
 
-func (c *fakeHttpClient) Get(url string) (*http.Response, error) {
+func (c *fakeHTTPClient) Get(url string) (*http.Response, error) {
 	if !strings.HasPrefix(url, "http") {
 		return nil, errNoTransport
 	}
@@ -36,14 +36,14 @@ func (c *fakeHttpClient) Get(url string) (*http.Response, error) {
 			_, _ = io.WriteString(w, `{}`)
 		}
 	}
-	req := httptest.NewRequest("GET", url, nil)
+	req := httptest.NewRequest(http.MethodGet, url, nil)
 	w := httptest.NewRecorder()
 	urlHandler(w, req)
 	return w.Result(), nil
 }
 
 func TestNewFrom(t *testing.T) {
-	var ct = &fakeHttpClient{}
+	var ct = &fakeHTTPClient{}
 	var dt = []struct {
 		from   string
 		client rpc.Getter

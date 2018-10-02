@@ -336,7 +336,7 @@ func (d *Release) fetch() map[string]interface{} {
 	var wg sync.WaitGroup
 	for k, v := range d.src {
 		wg.Add(1)
-		go func(k string, v interface{}) {
+		go func(k string, _ interface{}) {
 			defer wg.Done()
 			// we arbitrary choose the first server as data reference.
 			cv, found := d.to[0].Lookup(k)

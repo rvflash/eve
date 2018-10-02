@@ -64,7 +64,7 @@ func (s *Server) ProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 // ProjectsHandler listens post data to create a project and go its detail page.
 func (s *Server) ProjectsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		s.jsonHandler(w, "invalid method", http.StatusBadRequest)
 		return
 	}
