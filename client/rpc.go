@@ -7,30 +7,69 @@ package client
 import (
 	"net"
 	"net/rpc"
+	"sync"
 	"time"
 
 	cache "github.com/rvflash/eve/rpc"
 )
 
-// RPC is client with connection to cache'service.
-type RPC struct {
-	c Caller
-}
-
-// NewRPC returns a new instance of RPC.
-func NewRPC(conn Caller) *RPC {
-	return &RPC{c: conn}
-}
-
 // OpenRPC returns an instance of RPC with a TCP connection into it.
 // DSN is in the form of "localhost:9090".
 // If the connection fails, it returns the error.
+// Unlike NewRPC, OpenRPC has an internal mechanism to reconnect on failure.
 func OpenRPC(dsn string, timeout time.Duration) (*RPC, error) {
+	conn, err := newRPC(dsn, timeout)
+	if err != nil {
+		return nil, err
+	}
+	c := &RPC{
+		c:       conn,
+		dsn:     dsn,
+		tick:    time.NewTicker(time.Second),
+		timeout: timeout,
+	}
+	go func() {
+		for range c.tick.C {
+			c.reconnectOnFail()
+		}
+	}()
+	return c, nil
+}
+
+func newRPC(dsn string, timeout time.Duration) (*rpc.Client, error) {
 	c, err := net.DialTimeout("tcp", dsn, timeout)
 	if err != nil {
 		return nil, err
 	}
-	return NewRPC(rpc.NewClient(c)), nil
+	return rpc.NewClient(c), nil
+}
+
+// NewRPC returns a new instance of RPC.
+// This instance has no mechanism to reconnect on failure.
+func NewRPC(conn Caller) *RPC {
+	return &RPC{c: conn}
+}
+
+// RPC is client with connection to cache'service.
+type RPC struct {
+	c       Caller
+	dsn     string
+	mu      sync.Mutex
+	tick    *time.Ticker
+	timeout time.Duration
+}
+
+func (r *RPC) reconnectOnFail() {
+	if r.Available() {
+		return
+	}
+	c, err := newRPC(r.dsn, r.timeout)
+	if err != nil {
+		return
+	}
+	r.mu.Lock()
+	r.c = c
+	r.mu.Unlock()
 }
 
 // Available implements the Checker interface.
@@ -53,7 +92,7 @@ func (r *RPC) Bulk(batch map[string]interface{}) error {
 		items[i] = &cache.Item{Key: k, Value: v}
 	}
 	var bulked bool
-	if err := r.c.Call("Cache.Bulk", items, &bulked); err != nil {
+	if err := r.call("Cache.Bulk", items, &bulked); err != nil {
 		return err
 	}
 	if !bulked {
@@ -66,7 +105,7 @@ func (r *RPC) Bulk(batch map[string]interface{}) error {
 // An error occurs if the call fails.
 func (r *RPC) Clear() error {
 	var cleared bool
-	if err := r.c.Call("Cache.Clear", true, &cleared); err != nil {
+	if err := r.call("Cache.Clear", true, &cleared); err != nil {
 		return err
 	}
 	if !cleared {
@@ -75,11 +114,24 @@ func (r *RPC) Clear() error {
 	return nil
 }
 
+// Close closes the connection.
+func (r *RPC) Close() error {
+	if r.tick != nil {
+		r.tick.Stop()
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.c != nil {
+		return r.c.Close()
+	}
+	return nil
+}
+
 // Delete removes this key in the cache and acknowledges the boolean if it succeeds.
 // An error occurs if the call fails.
 func (r *RPC) Delete(key string) error {
 	var deleted bool
-	if err := r.c.Call("Cache.Delete", key, &deleted); err != nil {
+	if err := r.call("Cache.Delete", key, &deleted); err != nil {
 		return err
 	}
 	if !deleted {
@@ -106,7 +158,7 @@ func (r *RPC) Lookup(key string) (interface{}, bool) {
 // Raw returns the value behind the key or an error if it not exists
 func (r *RPC) Raw(key string) (interface{}, error) {
 	var item cache.Item
-	if err := r.c.Call("Cache.Get", key, &item); err != nil {
+	if err := r.call("Cache.Get", key, &item); err != nil {
 		return nil, err
 	}
 	return item.Value, nil
@@ -117,7 +169,7 @@ func (r *RPC) Raw(key string) (interface{}, error) {
 func (r *RPC) Set(key string, value interface{}) error {
 	var added bool
 	item := &cache.Item{Key: key, Value: value}
-	if err := r.c.Call("Cache.Put", item, &added); err != nil {
+	if err := r.call("Cache.Put", item, &added); err != nil {
 		return err
 	}
 	if !added {
@@ -130,6 +182,15 @@ func (r *RPC) Set(key string, value interface{}) error {
 // An error occurs and returned if the call fails.
 func (r *RPC) Stats() (*cache.Metrics, error) {
 	req := &cache.Metrics{}
-	err := r.c.Call("Cache.Stats", true, req)
+	err := r.call("Cache.Stats", true, req)
 	return req, err
+}
+
+func (r *RPC) call(service string, args, reply interface{}) error {
+	if r.c == nil {
+		return ErrConn
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.c.Call(service, args, reply)
 }

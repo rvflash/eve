@@ -27,6 +27,7 @@ type Asserter interface {
 // waits for it to complete, and returns its error status.
 type Caller interface {
 	Call(service string, args, reply interface{}) error
+	Close() error
 }
 
 // Checker must be implemented by any client
@@ -53,6 +54,7 @@ type GetSetter interface {
 
 // Error messages.
 var (
+	ErrConn    = errors.New("missing connection")
 	ErrFailure = errors.New("request has failed")
 	ErrKind    = errors.New("invalid data type")
 )

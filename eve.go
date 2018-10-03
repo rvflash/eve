@@ -38,7 +38,7 @@ var (
 
 // Tick is the time duration to sleep before checking
 // if at least one RPC cache is available.
-var Tick = time.Minute
+var Tick = time.Second * 30
 
 // Handler returns the list of data sources in the order
 // in which they are used.

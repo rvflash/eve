@@ -61,6 +61,11 @@ func (c rpc) Call(service string, args, reply interface{}) error {
 	return nil
 }
 
+// Close implements the client.Caller interface
+func (c rpc) Close() error {
+	return nil
+}
+
 // Fake RPC client for tests.
 var errClient = client.NewRPC(rpc(0))
 var rpcClient = client.NewRPC(rpc(1))

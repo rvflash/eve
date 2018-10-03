@@ -65,6 +65,11 @@ func (c *rpc) Call(service string, args, reply interface{}) error {
 	return errors.New("unknown service")
 }
 
+// Close implements the client.Caller interface
+func (c rpc) Close() error {
+	return nil
+}
+
 var c = client.NewRPC(&rpc{})
 
 func TestOpenRPC(t *testing.T) {
