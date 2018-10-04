@@ -7,6 +7,7 @@ package eve
 import (
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -50,19 +51,50 @@ func (h Handler) AddHandler(src client.Getter) Handler {
 	return h
 }
 
-// Servers tries to connect to each net address and returns them.
-func Servers(addr ...string) (caches []client.Getter, err error) {
+// PartialServers tries to connect to each net address and do not care of connection errors.
+// If a connection error occurred, the error is discarded and the process continues.
+func PartialServers(addr ...string) (caches []client.Getter, partial bool, err error) {
+	return dialTo(true, addr...)
+}
+
+// Servers tries to connect to each net address and returns connection to each of them.
+// If an error occurred, the rest of the stack is ignored and the first error is returned.
+func Servers(addr ...string) ([]client.Getter, error) {
+	caches, _, err := dialTo(false, addr...)
+	return caches, err
+}
+
+func dialTo(withPartial bool, addr ...string) (caches []client.Getter, partial bool, errs error) {
 	replicate := len(addr)
 	if replicate == 0 {
-		return nil, ErrDataSource
+		errs = ErrDataSource
+		return
 	}
 	caches = make([]client.Getter, replicate)
+
+	var err error
 	for p, dsn := range addr {
 		caches[p], err = client.OpenRPC(dsn, client.DefaultCacheDuration)
 		if err != nil {
-			return
+			// Chains the occurred errors
+			if errs == nil {
+				errs = errors.WithMessage(err, dsn)
+			} else {
+				errs = errors.Wrapf(err, "%s #%d. %s: ", errs, p, dsn)
+			}
+			if !withPartial {
+				// Partial mode not required
+				return
+			}
+			if !strings.HasPrefix(err.Error(), "connect:") {
+				// Not an error of connection.
+				return
+			}
 		}
 	}
+	// Marks the process as partial.
+	partial = errs != nil
+
 	return
 }
 
