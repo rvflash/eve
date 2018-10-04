@@ -52,7 +52,7 @@ func TestKindAssert(t *testing.T) {
 	}{
 		// ko
 		{db.Unknown, nil, nil, false},
-		{db.Bool, "", "", false},
+		{db.Bool, "", false, false},
 		// ok
 		{db.String, "rv", "rv", true},
 		{db.Int, 1, 1, true},
