@@ -7,6 +7,7 @@ package eve
 import (
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,47 +17,84 @@ import (
 	"github.com/rvflash/eve/deploy"
 )
 
-// Error messages
+// Error messages.
 var (
-	ErrInvalid    = errors.New("invalid data")
-	ErrNotFound   = errors.New("not found")
+	// ErrInvalid is returned is the data is not well formed.
+	ErrInvalid = errors.New("invalid data")
+	// ErrNotFound is returned if the variable is not found.
+	ErrNotFound = errors.New("not found")
+	// ErrDataSource is returned if the RPC service is not available.
 	ErrDataSource = errors.New("no available rpc service")
-	ErrNoPointer  = errors.New("mandatory struct pointer")
+	// ErrNoPointer is returned if the element to manage is not pointer.
+	ErrNoPointer = errors.New("mandatory struct pointer")
 )
 
 // Initializes the data sources.
 var (
+	// Cache represents a local in-memory cache.
 	Cache = client.NewCache(client.DefaultCacheDuration)
-	OS    = &client.OS{}
+	// OS gives access to the environment variables.
+	OS = &client.OS{}
 )
 
 // Tick is the time duration to sleep before checking
 // if at least one RPC cache is available.
-var Tick = time.Minute
+var Tick = time.Second * 30
 
 // Handler returns the list of data sources in the order
 // in which they are used.
 type Handler map[int]client.Getter
 
-// Add adds a client to the scheduler.
+// AddHandler adds a client to the scheduler.
 func (h Handler) AddHandler(src client.Getter) Handler {
 	h[len(h)] = src
 	return h
 }
 
-// Servers tries to connect to each net address and returns them.
-func Servers(addr ...string) (caches []client.Getter, err error) {
+// PartialServers tries to connect to each net address and do not care of connection errors.
+// If a connection error occurred, the error is discarded and the process continues.
+func PartialServers(addr ...string) (caches []client.Getter, partial bool, err error) {
+	return dialTo(true, addr...)
+}
+
+// Servers tries to connect to each net address and returns connection to each of them.
+// If an error occurred, the rest of the stack is ignored and the first error is returned.
+func Servers(addr ...string) ([]client.Getter, error) {
+	caches, _, err := dialTo(false, addr...)
+	return caches, err
+}
+
+func dialTo(withPartial bool, addr ...string) (caches []client.Getter, partial bool, errs error) {
 	replicate := len(addr)
 	if replicate == 0 {
-		return nil, ErrDataSource
+		errs = ErrDataSource
+		return
 	}
 	caches = make([]client.Getter, replicate)
+
+	var err error
 	for p, dsn := range addr {
 		caches[p], err = client.OpenRPC(dsn, client.DefaultCacheDuration)
 		if err != nil {
-			return
+			// Chains the occurred errors
+			if errs == nil {
+				errs = errors.WithMessage(err, dsn)
+			} else {
+				errs = errors.Wrapf(err, "%s #%d. %s: ", errs, p, dsn)
+			}
+			if !withPartial {
+				// Partial mode not required
+				return
+			}
+			if !strings.Contains(err.Error(), "connect:") {
+				// Not an error of connection.
+				return
+			}
 		}
 	}
+	// Marks the process as partial.
+	partial = errs != nil
+
 	return
 }
 
@@ -181,14 +219,13 @@ func (c *Client) Lookup(key string) (interface{}, bool) {
 // It returns a boolean as second parameter to indicate if the key was found.
 func (c *Client) assert(key string, typ client.Kind) (v interface{}, ok bool) {
 	key = c.deployKey(key)
-	for _, h := range c.Handler {
-		if v, ok = h.Lookup(key); ok {
-			if ha, needAssert := h.(client.Asserter); needAssert {
+	for i := 0; i < len(c.Handler); i++ {
+		if v, ok = c.Handler[i].Lookup(key); ok {
+			if ha, needAssert := c.Handler[i].(client.Asserter); needAssert {
 				v, ok = ha.Assert(v, typ)
 			}
-			// If the current handler is the local cache,
-			// no need to save the data.
-			if _, k := h.(*client.Cache); k {
+			if _, k := c.Handler[i].(*client.Cache); k {
+				// If the current handler is the local cache, no need to save the data.
 				return
 			}
 			if lc := c.cache(); lc != nil {
@@ -330,7 +367,6 @@ func (c *Client) Process(spec interface{}) error {
 		default:
 			//todo Manages time.time from String var.
 		}
-
 		return nil
 	}
 	for _, info := range infos {
@@ -380,7 +416,7 @@ func (c *Client) Int(key string) (int, error) {
 	if !ok {
 		// JSON unmarshal stores the numbers as float64.
 		// On restarting, the RPC cache retrieves the data from a JSON.
-		// We needs to manage this behavior.
+		// We need to manage this behavior.
 		f, ok := d.(float64)
 		if !ok {
 			return 0, ErrInvalid

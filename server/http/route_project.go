@@ -64,11 +64,14 @@ func (s *Server) ProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 // ProjectsHandler listens post data to create a project and go its detail page.
 func (s *Server) ProjectsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		s.jsonHandler(w, "invalid method", http.StatusBadRequest)
 		return
 	}
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		s.jsonHandler(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Try to create a new project.
 	p := db.NewProject(r.Form.Get("name"), r.Form.Get("desc"))

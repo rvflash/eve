@@ -38,7 +38,7 @@ func TestCacheWorkflow(t *testing.T) {
 	} else if b, ok := data.(bool); !ok {
 		t.Fatalf("expected boolean data: got=%q", data)
 	} else if b != v {
-		t.Fatalf("content mismatch: exp=%q got=%q", v, b)
+		t.Fatalf("content mismatch: exp=%t got=%t", v, b)
 	}
 	// Gets its value.
 	if data := c.Get(k); data == nil {
@@ -46,7 +46,7 @@ func TestCacheWorkflow(t *testing.T) {
 	} else if b, ok := data.(bool); !ok {
 		t.Fatalf("expected boolean data: got=%q", data)
 	} else if b != v {
-		t.Fatalf("content mismatch: exp=%q got=%q", v, b)
+		t.Fatalf("content mismatch: exp=%t got=%t", v, b)
 	}
 	// Break to stand by the cache's expiration.
 	time.Sleep(d)

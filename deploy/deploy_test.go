@@ -26,7 +26,7 @@ func TestServerLess(t *testing.T) {
 	}
 	data := map[string]interface{}{"rv": nil}
 	if err := deploy.ServerLess.Bulk(data); err != nil {
-		t.Fatalf("bulk error: got=%q exp=%q", err, nil)
+		t.Fatalf("bulk error: got=%q", err)
 	}
 }
 
@@ -58,6 +58,11 @@ func (c rpc) Call(service string, args, reply interface{}) error {
 		}
 		return cache.ErrNotFound
 	}
+	return nil
+}
+
+// Close implements the client.Caller interface
+func (c rpc) Close() error {
 	return nil
 }
 
@@ -294,7 +299,7 @@ func TestKey(t *testing.T) {
 	}
 	for i, tt := range dt {
 		if out := deploy.Key(tt.in...); out != tt.out {
-			t.Errorf("%d. content mismatch: got=%d exp=%d", i, out, tt.out)
+			t.Errorf("%d. content mismatch: got=%q exp=%q", i, out, tt.out)
 		}
 	}
 }

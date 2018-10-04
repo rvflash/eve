@@ -15,6 +15,12 @@ import (
 	cache "github.com/rvflash/eve/rpc"
 )
 
+var (
+	dataBool = "bool"
+	dataErr  = "err"
+	dataNil  = "nil"
+)
+
 // rpc is the test's RPC client.
 type rpc struct{}
 
@@ -23,7 +29,7 @@ func (c *rpc) Call(service string, args, reply interface{}) error {
 	switch service {
 	case "Cache.Bulk":
 		items := args.([]*cache.Item)
-		if items[0].Key == "bool" {
+		if items[0].Key == dataBool {
 			*reply.(*bool) = true
 		}
 		return nil
@@ -32,14 +38,14 @@ func (c *rpc) Call(service string, args, reply interface{}) error {
 		return nil
 	case "Cache.Delete":
 		switch args {
-		case "err":
+		case dataErr:
 			return cache.ErrNotFound
-		case "bool":
+		case dataBool:
 			*reply.(*bool) = true
 		}
 		return nil
 	case "Cache.Get":
-		if args == "bool" {
+		if args == dataBool {
 			reply.(*cache.Item).Value = true
 			return nil
 		}
@@ -47,9 +53,9 @@ func (c *rpc) Call(service string, args, reply interface{}) error {
 	case "Cache.Put":
 		item := args.(*cache.Item)
 		switch item.Key {
-		case "err":
+		case dataErr:
 			return cache.ErrNotFound
-		case "bool":
+		case dataBool:
 			*reply.(*bool) = true
 		}
 		return nil
@@ -57,6 +63,11 @@ func (c *rpc) Call(service string, args, reply interface{}) error {
 		return nil
 	}
 	return errors.New("unknown service")
+}
+
+// Close implements the client.Caller interface
+func (c rpc) Close() error {
+	return nil
 }
 
 var c = client.NewRPC(&rpc{})
@@ -74,9 +85,9 @@ func TestRPCGet(t *testing.T) {
 		err    error
 		exists bool
 	}{
-		{in: "bool", out: true, exists: true},
-		{in: "nil", err: cache.ErrNotFound},
-		{in: "err", err: cache.ErrNotFound},
+		{in: dataBool, out: true, exists: true},
+		{in: dataNil, err: cache.ErrNotFound},
+		{in: dataErr, err: cache.ErrNotFound},
 	}
 	var exists bool
 	for i, tt := range dt {
@@ -92,7 +103,7 @@ func TestRPCGet(t *testing.T) {
 		}
 		out, exists = c.Lookup(tt.in)
 		if exists != tt.exists {
-			t.Errorf("%d. exists mismatch for %q: got=%q exp=%q", i, tt.in, exists, tt.exists)
+			t.Errorf("%d. exists mismatch for %q: got=%t exp=%t", i, tt.in, exists, tt.exists)
 		}
 		if out != tt.out {
 			t.Errorf("%d. lookup content mismatch for %q: got=%q exp=%q", i, tt.in, out, tt.out)
@@ -105,9 +116,9 @@ func TestRPCDelete(t *testing.T) {
 		in  string
 		err error
 	}{
-		{in: "bool"},
-		{in: "nil", err: client.ErrFailure},
-		{in: "err", err: cache.ErrNotFound},
+		{in: dataBool},
+		{in: dataNil, err: client.ErrFailure},
+		{in: dataErr, err: cache.ErrNotFound},
 	}
 	for i, tt := range dt {
 		if err := c.Delete(tt.in); !reflect.DeepEqual(err, tt.err) {
@@ -128,9 +139,9 @@ func TestRPCSet(t *testing.T) {
 		value interface{}
 		err   error
 	}{
-		{key: "bool", value: true},
-		{key: "nil", err: client.ErrFailure},
-		{key: "err", err: cache.ErrNotFound},
+		{key: dataBool, value: true},
+		{key: dataNil, err: client.ErrFailure},
+		{key: dataErr, err: cache.ErrNotFound},
 	}
 	for i, tt := range dt {
 		if err := c.Set(tt.key, tt.value); !reflect.DeepEqual(err, tt.err) {
@@ -157,8 +168,8 @@ func TestRPCBulk(t *testing.T) {
 		err   error
 	}{
 		{},
-		{batch: map[string]interface{}{"bool": true}},
-		{batch: map[string]interface{}{"err": nil}, err: client.ErrFailure},
+		{batch: map[string]interface{}{dataBool: true}},
+		{batch: map[string]interface{}{dataErr: nil}, err: client.ErrFailure},
 	}
 	for i, tt := range dt {
 		if err := c.Bulk(tt.batch); !reflect.DeepEqual(err, tt.err) {

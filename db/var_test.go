@@ -52,7 +52,7 @@ func TestKindAssert(t *testing.T) {
 	}{
 		// ko
 		{db.Unknown, nil, nil, false},
-		{db.Bool, "", "", false},
+		{db.Bool, "", false, false},
 		// ok
 		{db.String, "rv", "rv", true},
 		{db.Int, 1, 1, true},
@@ -61,9 +61,9 @@ func TestKindAssert(t *testing.T) {
 	}
 	for i, tt := range dt {
 		if out, ok := tt.on.Assert(tt.in); ok != tt.ok {
-			t.Errorf("%d. kind mismatch: exp=%q got=%q", i, tt.ok, ok)
+			t.Errorf("%d. kind mismatch: exp=%t got=%t", i, tt.ok, ok)
 		} else if out != tt.out {
-
+			t.Errorf("%d. result mismatch: exp=%v got=%v", i, tt.out, out)
 		}
 	}
 }
@@ -246,7 +246,7 @@ func TestVarCleanValues(t *testing.T) {
 				t.Errorf("%d. content mismatch: exp=%q got=%q", i, tt.out, tt.on.Values)
 			}
 			if tt.partial != tt.on.Partial {
-				t.Errorf("%d. partial content mismatch: exp=%q got=%q", i, tt.partial, tt.on.Partial)
+				t.Errorf("%d. partial content mismatch: exp=%t got=%t", i, tt.partial, tt.on.Partial)
 			}
 		}
 	}

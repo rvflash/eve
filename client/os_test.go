@@ -33,7 +33,7 @@ func TestOSGet(t *testing.T) {
 func TestOSLookup(t *testing.T) {
 	for i, tt := range osTests {
 		if s, ok := osClient.Lookup(tt.in); tt.ok != ok {
-			t.Fatalf("%d. lookup fails for %s: exp=%q got=%q", i, tt.in, tt.ok, ok)
+			t.Fatalf("%d. lookup fails for %s: exp=%t got=%t", i, tt.in, tt.ok, ok)
 		} else if ok && s == "" {
 			t.Fatalf("%d. content mismatch for %s", i, tt.in)
 		}
@@ -56,7 +56,7 @@ func TestOSAssert(t *testing.T) {
 	for i, tt := range dt {
 		out, ok := osClient.Assert(tt.in, tt.kind)
 		if ok != tt.ok {
-			t.Fatalf("%d. assert mismatch: got=%q exp=%q", i, ok, tt.ok)
+			t.Fatalf("%d. assert mismatch: got=%t exp=%t", i, ok, tt.ok)
 		}
 		if out != tt.out {
 			t.Errorf("%d. content mismatch: got=%q exp=%q", i, out, tt.out)
@@ -67,14 +67,17 @@ func TestOSAssert(t *testing.T) {
 
 func TestOSSet(t *testing.T) {
 	k := "EVE_CLIENT_OS_TEST"
-	if err := osClient.Set(k, 1); err != client.ErrKind {
+	err := osClient.Set(k, 1)
+	if err != client.ErrKind {
 		t.Fatalf("unexpected error: exp=%q got=%q", client.ErrKind, err)
 	}
-	if err := osClient.Set(k, "true"); err != nil {
-		t.Fatalf("unexpected error: exp=%q got=%q", nil, err)
+	if err = osClient.Set(k, "true"); err != nil {
+		t.Fatalf("unexpected error: got=%q", err)
 	} else if out := osClient.Get(k); out != "true" {
 		t.Fatalf("content mismatch: exp=%q got=%q", "true", out)
 	}
 	// Resets
-	os.Setenv(k, "")
+	if err = os.Setenv(k, ""); err != nil {
+		t.Fatalf("unexpected error: got=%q", err)
+	}
 }

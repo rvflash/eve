@@ -64,10 +64,7 @@ func readJSON(filePath string, to *map[string]interface{}) error {
 		}
 		return err
 	}
-	if err := json.Unmarshal(raw, to); err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(raw, to)
 }
 
 type deployTmplVars struct {
@@ -92,11 +89,14 @@ func (s *Server) NodeHandler(w http.ResponseWriter, r *http.Request) {
 
 // NodesHandler enables to create a node.
 func (s *Server) NodesHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		s.jsonHandler(w, "invalid method", http.StatusBadRequest)
 		return
 	}
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		s.jsonHandler(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Tries to add this server's address.
 	n := db.NewNode(r.Form.Get("naddr"))
@@ -157,7 +157,9 @@ func (s *Server) deploy(p db.Keyer, w []db.Keyer, r *http.Request) (
 		}
 		return m
 	}
-	r.ParseForm()
+	if err = r.ParseForm(); err != nil {
+		return
+	}
 
 	// Checks the project envs to bypass the checkout page.
 	project := p.(*db.Project)
