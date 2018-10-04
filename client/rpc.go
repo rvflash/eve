@@ -19,9 +19,6 @@ import (
 // Unlike NewRPC, OpenRPC has an internal mechanism to reconnect on failure.
 func OpenRPC(dsn string, timeout time.Duration) (*RPC, error) {
 	conn, err := newRPC(dsn, timeout)
-	if err != nil {
-		return nil, err
-	}
 	c := &RPC{
 		c:       conn,
 		dsn:     dsn,
@@ -33,7 +30,7 @@ func OpenRPC(dsn string, timeout time.Duration) (*RPC, error) {
 			c.reconnectOnFail()
 		}
 	}()
-	return c, nil
+	return c, err
 }
 
 func newRPC(dsn string, timeout time.Duration) (*rpc.Client, error) {
@@ -187,10 +184,11 @@ func (r *RPC) Stats() (*cache.Metrics, error) {
 }
 
 func (r *RPC) call(service string, args, reply interface{}) error {
-	if r.c == nil {
-		return ErrConn
-	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.c == (*rpc.Client)(nil) {
+		// An interface value is equal to nil only if both its value and dynamic type are nil.
+		return ErrConn
+	}
 	return r.c.Call(service, args, reply)
 }

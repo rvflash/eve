@@ -86,7 +86,7 @@ func dialTo(withPartial bool, addr ...string) (caches []client.Getter, partial b
 				// Partial mode not required
 				return
 			}
-			if !strings.HasPrefix(err.Error(), "connect:") {
+			if !strings.Contains(err.Error(), "connect:") {
 				// Not an error of connection.
 				return
 			}
