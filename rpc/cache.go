@@ -24,7 +24,7 @@ const DefaultTimeout = 100 * time.Millisecond
 // in the remote cache.
 var ErrNotFound = errors.New("not found")
 
-// ErrUnExpected is triggered when the given data no matches
+// ErrUnexpected is triggered when the given data no matches
 // the expected len or data type.
 var ErrUnexpected = errors.New("unexpected data")
 
@@ -97,7 +97,9 @@ func NewFrom(url string, src ...Getter) (*Cache, error) {
 		return nil, errors.New(resp.Status)
 	}
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(resp.Body)
+	if _, err = buf.ReadFrom(resp.Body); err != nil {
+		return nil, err
+	}
 	res := make(map[string]interface{})
 	if err := json.Unmarshal(buf.Bytes(), &res); err != nil {
 		return nil, err

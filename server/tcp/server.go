@@ -33,11 +33,11 @@ func NewServer(listenIP string, port int) *Server {
 }
 
 // Serve starts the server.
-func (s *Server) Serve(fromUrl string) {
+func (s *Server) Serve(fromURL string) {
 	// Uses this URL as JSON data source on loading.
-	if fromUrl != "" {
+	if fromURL != "" {
 		var err error
-		if s.rpc, err = cache.NewFrom(fromUrl); err != nil {
+		if s.rpc, err = cache.NewFrom(fromURL); err != nil {
 			log.Fatal("Loader in error: ", err)
 		}
 	}

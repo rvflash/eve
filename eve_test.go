@@ -50,7 +50,7 @@ func Example() {
 	// Output: rv: 42
 }
 
-func ExampleClientProcess() {
+func ExampleClient_Process() {
 	vars := eve.New("test", server)
 	if err := vars.Envs("qa", "fr"); err != nil {
 		fmt.Println(err)
@@ -162,7 +162,7 @@ func TestClientBool(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error: got=%v", err)
 	}
-	if d != boolVal {
+	if !d {
 		t.Errorf("content mismatch: got=%v exp=%v", d, boolVal)
 	}
 	if _, err = c.Bool("rv"); !reflect.DeepEqual(err, eve.ErrNotFound) {
@@ -180,8 +180,8 @@ func TestClientMustBool(t *testing.T) {
 		}
 	}()
 	c := eve.New("test", server)
-	if d := c.MustBool("bool"); d != true {
-		t.Fatalf("content mismatch: got=%v exp=%v", d, true)
+	if d := c.MustBool("bool"); !d {
+		t.Fatalf("content mismatch: got=%v exp=%v", d, boolVal)
 	}
 	_ = c.MustBool("rv")
 }
@@ -351,11 +351,40 @@ func TestClientTooMuchEnvs(t *testing.T) {
 }
 
 func TestServers(t *testing.T) {
-	if _, err := eve.Servers(); err != eve.ErrDataSource {
-		t.Fatalf("error mismatch: got=%q exp=%q", err, eve.ErrDataSource)
+	var dt = []struct {
+		addr    []string
+		err     error
+		partial bool
+	}{
+		{err: eve.ErrDataSource},
+		{addr: []string{""}, err: errors.New(": dial tcp: missing address")},
 	}
-	dialErr := errors.New("dial tcp: missing address")
-	if _, err := eve.Servers(""); err.Error() != dialErr.Error() {
-		t.Fatalf("error mismatch: got=%q exp=%q", err, dialErr)
+
+	var (
+		err     error
+		partial bool
+	)
+	for i, tt := range dt {
+		_, err = eve.Servers(tt.addr...)
+		if !equalErrs(err, tt.err) {
+			t.Fatalf("%d. error mismatch: got=%q exp=%q", i, err, tt.err)
+		}
+		_, partial, err = eve.PartialServers(tt.addr...)
+		if !equalErrs(err, tt.err) {
+			t.Fatalf("%d. partial error mismatch: got=%q exp=%q", i, err, tt.err)
+		}
+		if partial != tt.partial {
+			t.Errorf("%d. partial value mismatch: got=%t exp=%t", i, partial, tt.partial)
+		}
 	}
+}
+
+func equalErrs(e1, e2 error) bool {
+	if e1 == nil {
+		return e2 == nil
+	}
+	if e2 == nil {
+		return e1 == nil
+	}
+	return e1.Error() == e2.Error()
 }

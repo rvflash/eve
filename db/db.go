@@ -427,10 +427,7 @@ func (m *Data) get(key, table []byte) (d Keyer, err error) {
 		if d, err = newFor(table); err != nil {
 			return errors.WithMessage(err, string(table))
 		}
-		if err := json.Unmarshal(v, d); err != nil {
-			return err
-		}
-		return nil
+		return json.Unmarshal(v, d)
 	})
 	return
 }
@@ -490,7 +487,9 @@ func (m *Data) put(tx *bolt.Tx, d Valuable, table []byte, free bool) error {
 			if err != nil {
 				return err
 			}
-			d.SetKey(itob(k))
+			if err = d.SetKey(itob(k)); err != nil {
+				return err
+			}
 		}
 		// Checks if the elements doesn't exist.
 		if len(b.Get(d.Key())) > 0 {
@@ -504,10 +503,7 @@ func (m *Data) put(tx *bolt.Tx, d Valuable, table []byte, free bool) error {
 	if err != nil {
 		return err
 	}
-	if err := b.Put(d.Key(), buf); err != nil {
-		return err
-	}
-	return nil
+	return b.Put(d.Key(), buf)
 }
 
 // var returns a reference to a var or an error.

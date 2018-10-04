@@ -44,9 +44,9 @@ func (s *Server) VarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch r.Method {
-	case "POST":
+	case http.MethodPost:
 		h.putHandler(w, r)
-	case "GET":
+	case http.MethodGet:
 		if strings.HasSuffix(r.URL.Path, "/delete") {
 			h.deleteHandler(w, r)
 		} else {
@@ -55,7 +55,7 @@ func (s *Server) VarHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *varHandler) deleteHandler(w http.ResponseWriter, r *http.Request) {
+func (h *varHandler) deleteHandler(w http.ResponseWriter, _ *http.Request) {
 	// Deletes this variable on the given project.
 	if err := h.s.db.DeleteVarInProject(h.v.(*db.Var), h.rv["pid"]); err != nil {
 		h.s.jsonHandler(w, err.Error(), http.StatusBadRequest)
@@ -110,7 +110,10 @@ func (h *varHandler) getHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *varHandler) putHandler(w http.ResponseWriter, r *http.Request) {
 	// Try to update the given variable.
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		h.s.jsonHandler(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	// Builds the map of new values for the response.
 	v := h.v.(*db.Var)
 	m := make(map[string]string)
@@ -136,11 +139,14 @@ func (h *varHandler) putHandler(w http.ResponseWriter, r *http.Request) {
 
 // VarsHandler manages the creation of a project's variable.
 func (s *Server) VarsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		s.jsonHandler(w, "invalid method", http.StatusBadRequest)
 		return
 	}
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		s.jsonHandler(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Try to create one variable.
 	vars := mux.Vars(r)

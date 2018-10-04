@@ -115,7 +115,7 @@ func (p *Project) Vars() []Keyer {
 
 // Envs returns the envs of the project.
 func (p *Project) Envs() (envs []Keyer) {
-	envs = make([]Keyer, 2, 2)
+	envs = make([]Keyer, 2)
 	switch len(p.envs) {
 	case 2:
 		// A choice must be done to select a persistent "main" environment.
