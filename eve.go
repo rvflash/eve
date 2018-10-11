@@ -79,24 +79,25 @@ func dialTo(withPartial bool, addr ...string) (caches []client.Getter, partial b
 	)
 	for p, dsn := range addr {
 		caches[p], err = client.OpenRPC(dsn, client.DefaultCacheDuration)
-		if err != nil {
-			// Chains the occurred errors
-			if errs == nil {
-				errs = errors.WithMessage(err, dsn)
-			} else {
-				errs = errors.Wrapf(err, "%s #%d. %s: ", errs, p, dsn)
-			}
-			if !withPartial {
-				// Partial mode not enabled. Fail on first error.
-				return
-			}
-			_, ok = err.(*net.OpError)
-			if !ok {
-				// Not a connection error.
-				return
-			}
+		if err == nil {
+			alive++
+			continue
 		}
-		alive++
+		// Chains the occurred errors
+		if errs == nil {
+			errs = errors.WithMessage(err, dsn)
+		} else {
+			errs = errors.Wrapf(err, "%s #%d. %s: ", errs, p, dsn)
+		}
+		if !withPartial {
+			// Partial mode not enabled. Fail on first error.
+			return
+		}
+		_, ok = err.(*net.OpError)
+		if !ok {
+			// Not a connection error.
+			return
+		}
 	}
 	// Marks the process as partial.
 	partial = alive > 0 && errs != nil
