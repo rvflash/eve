@@ -5,9 +5,9 @@
 package eve
 
 import (
+	"net"
 	"reflect"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -72,28 +72,35 @@ func dialTo(withPartial bool, addr ...string) (caches []client.Getter, partial b
 	}
 	caches = make([]client.Getter, replicate)
 
-	var err error
+	var (
+		err   error
+		ok    bool
+		alive int
+	)
 	for p, dsn := range addr {
 		caches[p], err = client.OpenRPC(dsn, client.DefaultCacheDuration)
-		if err != nil {
-			// Chains the occurred errors
-			if errs == nil {
-				errs = errors.WithMessage(err, dsn)
-			} else {
-				errs = errors.Wrapf(err, "%s #%d. %s: ", errs, p, dsn)
-			}
-			if !withPartial {
-				// Partial mode not required
-				return
-			}
-			if !strings.Contains(err.Error(), "connect:") {
-				// Not an error of connection.
-				return
-			}
+		if err == nil {
+			alive++
+			continue
+		}
+		// Chains the occurred errors
+		if errs == nil {
+			errs = errors.WithMessage(err, dsn)
+		} else {
+			errs = errors.Wrapf(err, "%s #%d. %s: ", errs, p, dsn)
+		}
+		if !withPartial {
+			// Partial mode not enabled. Fail on first error.
+			return
+		}
+		_, ok = err.(*net.OpError)
+		if !ok {
+			// Not a connection error.
+			return
 		}
 	}
 	// Marks the process as partial.
-	partial = errs != nil
+	partial = alive > 0 && errs != nil
 
 	return
 }
